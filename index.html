@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EverGreen Empire Ltd — Login</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+  
+  <style>
+    .card { border-radius: 10px; box-shadow: 0 8px 22px rgba(15,23,42,0.06); }
+    body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="max-w-md w-full">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 rounded-full bg-blue-800 flex items-center justify-center mx-auto mb-4">
+        <span class="text-white text-xl font-bold">EG</span>
+      </div>
+      <h1 class="text-3xl font-semibold text-gray-900">EverGreen Empire</h1>
+      <p class="text-gray-600 mt-2">Executive dashboard</p>
+    </div>
+
+    <!-- Login Card -->
+    <div class="card bg-white p-8">
+      <form id="loginForm" class="space-y-6">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter your email"
+          >
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            required
+            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Enter your password"
+          >
+        </div>
+
+        <button 
+          type="submit"
+          class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition font-medium"
+        >
+          Sign In
+        </button>
+      </form>
+
+      <!-- Loading -->
+      <div id="loading" class="hidden mt-4 text-center">
+        <div class="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+        <p class="text-gray-600 mt-2 text-sm">Authenticating...</p>
+      </div>
+
+      <!-- Error Message -->
+      <div id="error" class="hidden mt-4 p-3 bg-red-50 border border-red-200 rounded-md">
+        <p class="text-red-800 text-sm" id="errorText"></p>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center mt-6">
+      <p class="text-gray-500 text-sm">EverGreen Empire Ltd &copy; 2024</p>
+    </div>
+  </div>
+
+  <script>
+    // Supabase Configuration
+    const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Role detection from email
+    function detectRole(email) {
+      if (email.includes('ceo@')) return 'ceo';
+      if (email.includes('cfo@')) return 'cfo';
+      if (email.includes('admin@')) return 'admin';
+      return 'user';
+    }
+
+    // Get role-based portal URL
+    function getPortalURL(role) {
+      const portals = {
+        'ceo': 'ceo.html',
+        'cfo': 'cfo.html', 
+        'admin': 'admin.html'
+      };
+      return portals[role] || 'admin.html';
+    }
+
+    // Get role title
+    function getRoleTitle(role) {
+      const titles = {
+        'ceo': 'Chief Executive Officer',
+        'cfo': 'Chief Financial Officer',
+        'admin': 'Administrator'
+      };
+      return titles[role] || 'User';
+    }
+
+    // Login form handler
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const loading = document.getElementById('loading');
+      const error = document.getElementById('error');
+      
+      // Show loading
+      loading.classList.remove('hidden');
+      error.classList.add('hidden');
+      
+      try {
+        // Sign in with Supabase Auth
+        const { data, error: authError } = await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+        
+        if (authError) throw authError;
+        
+        // Detect role and redirect
+        const role = detectRole(email);
+        const portalURL = getPortalURL(role);
+        const roleTitle = getRoleTitle(role);
+        
+        // Store user info in sessionStorage
+        sessionStorage.setItem('userEmail', email);
+        sessionStorage.setItem('userRole', role);
+        sessionStorage.setItem('userTitle', roleTitle);
+        
+        console.log(`✅ Login successful! Redirecting ${role} to ${portalURL}`);
+        
+        // Redirect to appropriate portal
+        window.location.href = portalURL;
+        
+      } catch (error) {
+        console.error('Login error:', error);
+        document.getElementById('errorText').textContent = 'Invalid email or password. Please try again.';
+        error.classList.remove('hidden');
+      } finally {
+        loading.classList.add('hidden');
+      }
+    });
+
+    // Check if already logged in
+    supabaseClient.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.email) {
+        const role = detectRole(session.user.email);
+        const portalURL = getPortalURL(role);
+        window.location.href = portalURL;
+      }
+    });
+  </script>
+</body>
+</html>

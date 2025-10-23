@@ -1,0 +1,883 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EverGreen — CEO Portal</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <style>
+    .card { border-radius: 10px; box-shadow: 0 8px 22px rgba(15,23,42,0.06); }
+    .table-fixed thead th { position: sticky; top: 0; background: white; z-index: 10; }
+    td, th { padding: 0.75rem 0.5rem; vertical-align: middle; }
+    .btn-primary { background-color: #7c3aed; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; }
+    .btn-primary:hover { background-color: #6d28d9; }
+    .btn-secondary { background-color: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; border: 1px solid #d1d5db; }
+    .btn-secondary:hover { background-color: #e5e7eb; }
+    .executive-positive { color: #7c3aed; }
+    .executive-negative { color: #dc2626; }
+    .executive-neutral { color: #6b7280; }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .metric-badge { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+    .growth-badge { background: linear-gradient(135deg, #10b981, #059669); }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-50 to-indigo-100 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-purple-800 to-indigo-800 text-white p-4 md:p-5">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full glass-effect flex items-center justify-center font-bold">EG</div>
+        <div>
+          <h1 class="text-lg md:text-2xl font-semibold">EverGreen Empire</h1>
+          <p id="greeting" class="text-xs md:text-sm opacity-90">Welcome, Chief Executive Officer</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Executive Summary -->
+        <div id="executiveSummary" class="hidden md:flex items-center gap-3 glass-effect p-2 rounded">
+          <div class="text-xs">Company Health</div>
+          <div id="companyHealth" class="font-semibold">Excellent</div>
+        </div>
+
+        <div class="relative">
+          <button id="notifBtn" class="p-2 rounded-md glass-effect flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="hidden md:inline">Alerts</span>
+          </button>
+          <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-sm md:text-base">CEO</span>
+          <button id="logoutBtn" class="p-2 rounded-md glass-effect text-sm hover:bg-white/20 transition">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Executive Greet Modal -->
+  <div id="greetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-gradient-to-br from-white to-purple-50 rounded-2xl p-8 max-w-md mx-4 text-center shadow-2xl">
+      <div class="w-20 h-20 bg-gradient-to-r from-purple-600 to-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+      </div>
+      <h3 class="text-3xl font-bold text-gray-900 mb-2" id="greetTime">Good Morning</h3>
+      <p class="text-gray-600 mb-2">Welcome back, <span class="font-semibold text-purple-600">Chief Executive Officer</span></p>
+      <p class="text-sm text-gray-500 mb-6">Ready to lead today's strategic initiatives?</p>
+      <button id="closeGreet" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-indigo-700 transition shadow-lg">
+        Access Executive Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="p-4 md:p-6 max-w-[1200px] mx-auto grid grid-cols-12 gap-6">
+    
+    <!-- Left Column - Executive Overview -->
+    <section class="col-span-12 lg:col-span-8 space-y-6">
+      
+      <!-- Executive KPIs -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <!-- Market Position -->
+        <div class="card bg-white p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900">Market Position</h3>
+            <div class="w-6 h-6 bg-purple-100 rounded flex items-center justify-center">
+              <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-2xl font-bold text-gray-900 mb-1" id="marketPosition">#3</div>
+          <div class="text-xs executive-positive">↑ 2 positions</div>
+        </div>
+
+        <!-- Team Performance -->
+        <div class="card bg-white p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900">Team Performance</h3>
+            <div class="w-6 h-6 bg-green-100 rounded flex items-center justify-center">
+              <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-2xl font-bold text-gray-900 mb-1" id="teamPerformance">94%</div>
+          <div class="text-xs executive-positive">Excellent</div>
+        </div>
+
+        <!-- Innovation Index -->
+        <div class="card bg-white p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900">Innovation</h3>
+            <div class="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+              <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-2xl font-bold text-gray-900 mb-1" id="innovationIndex">8.2</div>
+          <div class="text-xs executive-positive">/10 High</div>
+        </div>
+
+        <!-- Risk Level -->
+        <div class="card bg-white p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-900">Risk Level</h3>
+            <div class="w-6 h-6 bg-yellow-100 rounded flex items-center justify-center">
+              <svg class="w-4 h-4 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-2xl font-bold text-gray-900 mb-1" id="riskLevel">Low</div>
+          <div class="text-xs executive-positive">Stable</div>
+        </div>
+      </div>
+
+      <!-- Strategic Overview -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold">Strategic Overview</h3>
+          <div class="flex gap-2">
+            <button id="quickReport" class="btn-primary text-sm px-3 py-1">
+              Quick Report
+            </button>
+            <button id="exportData" class="btn-secondary text-sm px-3 py-1">
+              Export
+            </button>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Business Growth</h4>
+            <canvas id="growthChart" height="200"></canvas>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Market Share</h4>
+            <canvas id="marketChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Executive Tools -->
+      <div class="card bg-white p-6">
+        <h3 class="text-xl font-semibold mb-6">Executive Decision Tools</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- SWOT Analysis -->
+          <div class="border-2 border-dashed border-purple-200 rounded-lg p-4 bg-purple-50">
+            <h4 class="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+              </svg>
+              SWOT Analysis
+            </h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <label class="block text-xs text-purple-600 font-semibold mb-1">Strengths</label>
+                <textarea id="strengths" class="w-full p-2 border rounded text-xs" placeholder="Market leadership, Strong brand..." rows="2"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs text-red-600 font-semibold mb-1">Weaknesses</label>
+                <textarea id="weaknesses" class="w-full p-2 border rounded text-xs" placeholder="Limited resources..." rows="2"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs text-green-600 font-semibold mb-1">Opportunities</label>
+                <textarea id="opportunities" class="w-full p-2 border rounded text-xs" placeholder="Market expansion..." rows="2"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs text-yellow-600 font-semibold mb-1">Threats</label>
+                <textarea id="threats" class="w-full p-2 border rounded text-xs" placeholder="New competitors..." rows="2"></textarea>
+              </div>
+              <button onclick="generateSWOT()" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition text-xs">
+                Analyze SWOT
+              </button>
+            </div>
+          </div>
+
+          <!-- Decision Matrix -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Decision Matrix</h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Decision Options</label>
+                <input type="text" id="decisionOptions" class="w-full p-2 border rounded text-xs" placeholder="Option A, Option B, Option C">
+              </div>
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Criteria (comma separated)</label>
+                <input type="text" id="decisionCriteria" class="w-full p-2 border rounded text-xs" placeholder="Cost, Impact, Risk, Time">
+              </div>
+              <button onclick="createDecisionMatrix()" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition text-xs">
+                Create Matrix
+              </button>
+              <div id="matrixResult" class="hidden mt-3 p-3 bg-gray-50 rounded text-xs">
+                <div class="font-semibold mb-2">Recommended: <span id="bestOption" class="executive-positive"></span></div>
+                <div id="matrixDetails" class="text-gray-600"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Risk Assessment -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Risk Assessment</h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Initiative</label>
+                <input type="text" id="initiativeName" class="w-full p-2 border rounded text-xs" placeholder="New product launch">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Probability (1-10)</label>
+                  <input type="number" id="riskProbability" class="w-full p-2 border rounded text-xs" min="1" max="10" value="5">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Impact (1-10)</label>
+                  <input type="number" id="riskImpact" class="w-full p-2 border rounded text-xs" min="1" max="10" value="5">
+                </div>
+              </div>
+              <button onclick="assessRisk()" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition text-xs">
+                Assess Risk
+              </button>
+              <div id="riskResult" class="hidden mt-3 p-3 rounded text-xs text-center">
+                <div class="font-semibold" id="riskLevelText"></div>
+                <div class="text-gray-600 mt-1" id="riskRecommendation"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Strategic Goals -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Strategic Goals Tracker</h4>
+            <div class="space-y-3 text-sm">
+              <div>
+                <label class="block text-xs text-gray-600 mb-1">Goal Description</label>
+                <input type="text" id="goalDescription" class="w-full p-2 border rounded text-xs" placeholder="Increase market share by 15%">
+              </div>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Timeline (months)</label>
+                  <input type="number" id="goalTimeline" class="w-full p-2 border rounded text-xs" value="12">
+                </div>
+                <div>
+                  <label class="block text-xs text-gray-600 mb-1">Priority (1-10)</label>
+                  <input type="number" id="goalPriority" class="w-full p-2 border rounded text-xs" min="1" max="10" value="8">
+                </div>
+              </div>
+              <button onclick="addStrategicGoal()" class="w-full bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition text-xs">
+                Add Goal
+              </button>
+              <div id="goalsList" class="mt-3 space-y-2 max-h-32 overflow-y-auto">
+                <!-- Goals will be added here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column - Executive Dashboard -->
+    <aside class="col-span-12 lg:col-span-4 space-y-6">
+      
+      <!-- Executive Summary -->
+      <div class="card bg-gradient-to-br from-purple-600 to-indigo-600 text-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Executive Summary</h3>
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between items-center">
+            <span>Company Valuation</span>
+            <span class="font-semibold" id="companyValuation">$25.4M</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span>Employee Count</span>
+            <span class="font-semibold" id="employeeCount">147</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span>Customer Satisfaction</span>
+            <span class="font-semibold" id="customerSatisfaction">92%</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span>Quarterly Growth</span>
+            <span class="font-semibold" id="quarterlyGrowth">+18.3%</span>
+          </div>
+        </div>
+        <button onclick="generateExecutiveSummary()" class="w-full mt-4 bg-white text-purple-600 py-2 rounded hover:bg-gray-100 transition font-semibold text-sm">
+          Download Full Report
+        </button>
+      </div>
+
+      <!-- Critical Alerts -->
+      <div class="card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.35 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+          </svg>
+          Critical Alerts
+        </h3>
+        <div id="criticalAlerts" class="space-y-2">
+          <div class="p-2 bg-red-50 border border-red-200 rounded text-xs">
+            <div class="font-semibold text-red-800">Market Competition</div>
+            <div class="text-red-600">New competitor launched similar product</div>
+          </div>
+          <div class="p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+            <div class="font-semibold text-yellow-800">Resource Allocation</div>
+            <div class="text-yellow-600">Team capacity at 92% - review priorities</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strategic Initiatives -->
+      <div class="card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Strategic Initiatives</h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Market Expansion</div>
+              <div class="text-xs text-gray-500">Asia-Pacific region</div>
+            </div>
+            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+          </div>
+          <div class="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Product Innovation</div>
+              <div class="text-xs text-gray-500">AI integration</div>
+            </div>
+            <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+          </div>
+          <div class="flex items-center justify-between p-3 border rounded-lg">
+            <div>
+              <div class="font-semibold text-sm">Talent Development</div>
+              <div class="text-xs text-gray-500">Leadership program</div>
+            </div>
+            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Strategic Insights -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Strategic Insights</h3>
+          <div class="text-sm text-gray-600">AI Powered</div>
+        </div>
+        <div id="strategicInsights" class="min-h-[120px] p-4 bg-gray-50 rounded-lg border">
+          <div class="text-gray-500 text-sm">AI strategic insights will appear here...</div>
+        </div>
+        <button onclick="generateStrategicInsights()" class="w-full mt-3 bg-purple-600 text-white py-2 rounded hover:bg-purple-700 transition">
+          Generate Insights
+        </button>
+      </div>
+
+      <!-- Executive Communications -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Executive Comms</h3>
+          <div class="text-sm text-gray-600">Board Updates</div>
+        </div>
+        <div id="executiveMessages" class="max-h-44 overflow-auto space-y-2 mb-3 p-2 border rounded bg-gray-50"></div>
+        <form id="executiveForm" class="space-y-3">
+          <input name="message" placeholder="Send board update..." class="w-full p-2 border rounded" required />
+          <button type="submit" class="w-full bg-purple-600 text-white rounded py-2 hover:bg-purple-700 transition">
+            Send to Board
+          </button>
+        </form>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+  /**************************************************************************
+   * CONFIGURATION
+   **************************************************************************/
+  const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
+  const RPM_PER_1000 = 0.12;
+
+  /**************************************************************************
+   * Initialize Supabase
+   **************************************************************************/
+  const { createClient } = supabase;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // DOM references
+  let greetingEl, executiveSummary, companyHealth, strategicInsights, executiveMessages;
+  let growthChartInstance, marketChartInstance;
+
+  // Data storage
+  let latestBrands = [], latestVideos = [], latestMessages = [];
+  let strategicGoals = [];
+
+  /**************************************************************************
+   * Authentication & Auto Greet
+   **************************************************************************/
+  async function checkAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'index.html';
+      return null;
+    }
+    return session.user;
+  }
+
+  function showAutoGreet() {
+    const now = new Date();
+    const hour = now.getHours();
+    let greeting = 'Good Morning';
+    
+    if (hour >= 12 && hour < 17) {
+      greeting = 'Good Afternoon';
+    } else if (hour >= 17) {
+      greeting = 'Good Evening';
+    }
+
+    document.getElementById('greetTime').textContent = greeting;
+    document.getElementById('greetModal').classList.remove('hidden');
+  }
+
+  function setupAutoGreet() {
+    document.getElementById('closeGreet').addEventListener('click', () => {
+      document.getElementById('greetModal').classList.add('hidden');
+    });
+
+    // Show greet modal on first load
+    setTimeout(showAutoGreet, 1000);
+  }
+
+  /**************************************************************************
+   * Executive Tools
+   **************************************************************************/
+  function generateSWOT() {
+    const strengths = document.getElementById('strengths').value;
+    const weaknesses = document.getElementById('weaknesses').value;
+    const opportunities = document.getElementById('opportunities').value;
+    const threats = document.getElementById('threats').value;
+
+    if (!strengths || !weaknesses || !opportunities || !threats) {
+      alert('Please fill in all SWOT categories');
+      return;
+    }
+
+    const analysis = `
+      Strategic Recommendations:
+      
+      🎯 Leverage Strengths: ${strengths.split(',')[0]} to capitalize on ${opportunities.split(',')[0]}
+      
+      ⚠️  Address Weaknesses: Focus on improving ${weaknesses.split(',')[0]} to mitigate ${threats.split(',')[0]}
+      
+      🚀 Growth Strategy: Use ${strengths.split(',')[1] || strengths.split(',')[0]} to pursue ${opportunities.split(',')[1] || opportunities.split(',')[0]}
+      
+      🛡️  Risk Mitigation: Develop contingency for ${threats.split(',')[1] || threats.split(',')[0]}
+    `;
+
+    alert('SWOT Analysis Complete!\n\n' + analysis);
+  }
+
+  function createDecisionMatrix() {
+    const options = document.getElementById('decisionOptions').value.split(',').map(o => o.trim());
+    const criteria = document.getElementById('decisionCriteria').value.split(',').map(c => c.trim());
+
+    if (options.length < 2 || criteria.length < 2) {
+      alert('Please enter at least 2 options and 2 criteria');
+      return;
+    }
+
+    // Simple scoring simulation
+    const scores = options.map(option => ({
+      option,
+      score: Math.floor(Math.random() * 40) + 60 // Random score 60-100
+    }));
+
+    const bestOption = scores.reduce((best, current) => current.score > best.score ? current : best);
+
+    document.getElementById('bestOption').textContent = bestOption.option;
+    document.getElementById('matrixDetails').innerHTML = `
+      ${scores.map(s => `${s.option}: ${s.score}/100`).join('<br>')}
+    `;
+    document.getElementById('matrixResult').classList.remove('hidden');
+  }
+
+  function assessRisk() {
+    const initiative = document.getElementById('initiativeName').value;
+    const probability = parseInt(document.getElementById('riskProbability').value);
+    const impact = parseInt(document.getElementById('riskImpact').value);
+
+    if (!initiative) {
+      alert('Please enter an initiative name');
+      return;
+    }
+
+    const riskScore = probability * impact;
+    let riskLevel, recommendation, color;
+
+    if (riskScore <= 25) {
+      riskLevel = 'Low Risk';
+      recommendation = 'Proceed with standard monitoring';
+      color = 'bg-green-100 text-green-800';
+    } else if (riskScore <= 50) {
+      riskLevel = 'Medium Risk';
+      recommendation = 'Proceed with enhanced monitoring and mitigation plans';
+      color = 'bg-yellow-100 text-yellow-800';
+    } else {
+      riskLevel = 'High Risk';
+      recommendation = 'Requires executive approval and comprehensive mitigation strategy';
+      color = 'bg-red-100 text-red-800';
+    }
+
+    document.getElementById('riskLevelText').textContent = riskLevel;
+    document.getElementById('riskRecommendation').textContent = recommendation;
+    document.getElementById('riskResult').className = `mt-3 p-3 rounded text-xs text-center ${color}`;
+    document.getElementById('riskResult').classList.remove('hidden');
+  }
+
+  function addStrategicGoal() {
+    const description = document.getElementById('goalDescription').value;
+    const timeline = document.getElementById('goalTimeline').value;
+    const priority = document.getElementById('goalPriority').value;
+
+    if (!description) {
+      alert('Please enter a goal description');
+      return;
+    }
+
+    const goal = {
+      id: Date.now(),
+      description,
+      timeline,
+      priority,
+      status: 'active',
+      createdAt: new Date().toLocaleDateString()
+    };
+
+    strategicGoals.push(goal);
+    renderStrategicGoals();
+    
+    // Clear form
+    document.getElementById('goalDescription').value = '';
+  }
+
+  function renderStrategicGoals() {
+    const goalsList = document.getElementById('goalsList');
+    goalsList.innerHTML = strategicGoals.map(goal => `
+      <div class="flex items-center justify-between p-2 border rounded text-xs">
+        <div class="flex-1">
+          <div class="font-semibold">${goal.description}</div>
+          <div class="text-gray-500">${goal.timeline} months • Priority: ${goal.priority}/10</div>
+        </div>
+        <button onclick="removeGoal(${goal.id})" class="text-red-500 hover:text-red-700 ml-2">
+          ×
+        </button>
+      </div>
+    `).join('');
+  }
+
+  function removeGoal(goalId) {
+    strategicGoals = strategicGoals.filter(goal => goal.id !== goalId);
+    renderStrategicGoals();
+  }
+
+  /**************************************************************************
+   * Charts Initialization
+   **************************************************************************/
+  function initCharts() {
+    // Growth Chart
+    const growthCtx = document.getElementById('growthChart').getContext('2d');
+    growthChartInstance = new Chart(growthCtx, {
+      type: 'line',
+      data: {
+        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        datasets: [{
+          label: 'Revenue Growth',
+          data: [15, 22, 18, 28],
+          borderColor: '#7c3aed',
+          backgroundColor: 'rgba(124, 58, 237, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+
+    // Market Share Chart
+    const marketCtx = document.getElementById('marketChart').getContext('2d');
+    marketChartInstance = new Chart(marketCtx, {
+      type: 'doughnut',
+      data: {
+        labels: ['EverGreen', 'Competitor A', 'Competitor B', 'Others'],
+        datasets: [{
+          data: [35, 25, 20, 20],
+          backgroundColor: ['#7c3aed', '#10b981', '#3b82f6', '#6b7280'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  }
+
+  /**************************************************************************
+   * AI Strategic Insights
+   **************************************************************************/
+  async function generateStrategicInsights() {
+    const insightsDiv = document.getElementById('strategicInsights');
+    
+    insightsDiv.innerHTML = `
+      <div class="flex items-center justify-center space-x-2">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-purple-600"></div>
+        <span class="text-gray-600">Analyzing strategic data...</span>
+      </div>
+    `;
+
+    // Simulate AI analysis with strategic insights
+    setTimeout(() => {
+      const insights = [
+        `Market leadership position strengthening - consider aggressive expansion in Q3`,
+        `Team performance at 94% indicates strong operational excellence`,
+        `Innovation index of 8.2/10 suggests good R&D investment returns`,
+        `Low risk profile allows for strategic investments in new markets`,
+        `Recommend focusing on Asia-Pacific expansion based on current growth trajectory`
+      ];
+
+      insightsDiv.innerHTML = `
+        <div class="space-y-2">
+          ${insights.map(insight => `
+            <div class="p-2 bg-white rounded border-l-4 border-purple-500 text-sm">
+              ${insight}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }, 2000);
+  }
+
+  function generateExecutiveSummary() {
+    alert('Executive Summary Report Generated!\n\nPDF download starting...');
+    // In a real implementation, this would generate and download a PDF report
+  }
+
+  /**************************************************************************
+   * Messaging System
+   **************************************************************************/
+  async function fetchMessagesAndRender() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      
+      latestMessages = data || [];
+      renderMessages(latestMessages);
+    } catch (e) { 
+      console.error('fetchMessages error:', e);
+      renderMessages([]);
+    }
+  }
+
+  function renderMessages(messages) {
+    executiveMessages.innerHTML = '';
+    
+    if (messages.length === 0) {
+      executiveMessages.innerHTML = '<div class="text-center text-gray-500 py-4">No executive messages yet</div>';
+      return;
+    }
+
+    messages.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'p-2 border-b fade-in hover:bg-white cursor-pointer';
+      div.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-semibold text-purple-600 text-sm">${m.sender || 'Unknown'}</span>
+            </div>
+            <div class="text-gray-700 text-xs">${m.message}</div>
+          </div>
+          <div class="text-xs text-gray-400 whitespace-nowrap ml-2">
+            ${new Date(m.created_at).toLocaleTimeString()}
+          </div>
+        </div>
+      `;
+      
+      executiveMessages.appendChild(div);
+    });
+  }
+
+  /**************************************************************************
+   * Event Handlers & Setup
+   **************************************************************************/
+  function setupEventListeners() {
+    // Executive message form
+    document.getElementById('executiveForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const message = formData.get('message');
+
+      try {
+        const { error } = await supabaseClient.from('messages').insert([{
+          sender: 'CEO',
+          receiver: 'Board',
+          message: message,
+          read: false,
+          created_at: new Date().toISOString()
+        }]);
+
+        if (error) throw error;
+        
+        alert('Board update sent!');
+        e.target.reset();
+        fetchMessagesAndRender();
+      } catch (error) {
+        console.error('Send message error:', error);
+        alert('Failed to send message: ' + error.message);
+      }
+    });
+
+    // Quick Report
+    document.getElementById('quickReport').addEventListener('click', () => {
+      generateExecutiveSummary();
+    });
+
+    // Export Data
+    document.getElementById('exportData').addEventListener('click', () => {
+      alert('Exporting executive data to CSV...');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await supabaseClient.auth.signOut();
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+      } catch (e) { 
+        console.error(e); 
+        alert('Sign out failed: ' + e.message); 
+      }
+    });
+  }
+
+  /**************************************************************************
+   * Data Fetching & Real-time
+   **************************************************************************/
+  async function fetchAndRenderAll() {
+    try {
+      const [{ data: brands, error: brandsError }] = await Promise.all([
+        supabaseClient.from('brands').select('*').order('views_28d', { ascending: false })
+      ]);
+
+      if (brandsError) throw brandsError;
+
+      latestBrands = brands || [];
+      
+      // Update executive summary with real data
+      updateExecutiveSummary();
+      
+    } catch (e) { 
+      console.error('fetchAll error:', e);
+    }
+  }
+
+  function updateExecutiveSummary() {
+    // Show executive summary badge
+    document.getElementById('executiveSummary').classList.remove('hidden');
+  }
+
+  function setupRealtime() {
+    try {
+      supabaseClient.channel('ceo-brands')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'brands' }, () => {
+          console.log('Brands updated - refreshing CEO data');
+          fetchAndRenderAll();
+        })
+        .subscribe();
+
+      supabaseClient.channel('ceo-messages')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+          console.log('Messages updated - refreshing CEO messages');
+          fetchMessagesAndRender();
+        })
+        .subscribe();
+
+      console.log('CEO real-time subscriptions activated!');
+    } catch (e) { 
+      console.warn('Realtime setup failed:', e); 
+    }
+  }
+
+  /**************************************************************************
+   * Initialization
+   **************************************************************************/
+  function initializeDOMReferences() {
+    greetingEl = document.getElementById('greeting');
+    executiveSummary = document.getElementById('executiveSummary');
+    companyHealth = document.getElementById('companyHealth');
+    strategicInsights = document.getElementById('strategicInsights');
+    executiveMessages = document.getElementById('executiveMessages');
+  }
+
+  /**************************************************************************
+   * Main Boot Function
+   **************************************************************************/
+  async function boot() {
+    console.log('👑 Initializing CEO Portal...');
+    
+    // Check authentication
+    const user = await checkAuth();
+    if (!user) return;
+    
+    // Initialize DOM references
+    initializeDOMReferences();
+    
+    // Setup features
+    setupAutoGreet();
+    initCharts();
+    setupEventListeners();
+    
+    // Load data
+    try {
+      await fetchAndRenderAll();
+      await fetchMessagesAndRender();
+      setupRealtime();
+      console.log('✅ CEO Portal initialized successfully!');
+    } catch (e) {
+      console.error('❌ CEO boot error:', e);
+    }
+  }
+
+  // Start the application
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+  </script>
+</body>
+</html>

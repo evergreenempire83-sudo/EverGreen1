@@ -1,0 +1,869 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EverGreen — CFO Portal</title>
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+  <!-- Financial Charts Library -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
+
+  <style>
+    .card { border-radius: 10px; box-shadow: 0 8px 22px rgba(15,23,42,0.06); }
+    .table-fixed thead th { position: sticky; top: 0; background: white; z-index: 10; }
+    td, th { padding: 0.75rem 0.5rem; vertical-align: middle; }
+    .btn-primary { background-color: #059669; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; }
+    .btn-primary:hover { background-color: #047857; }
+    .btn-secondary { background-color: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; border: 1px solid #d1d5db; }
+    .btn-secondary:hover { background-color: #e5e7eb; }
+    .financial-positive { color: #059669; }
+    .financial-negative { color: #dc2626; }
+    .financial-neutral { color: #6b7280; }
+    .fade-in { animation: fadeIn 0.5s ease-in; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    .profit-badge { background: linear-gradient(135deg, #10b981, #059669); }
+    .loss-badge { background: linear-gradient(135deg, #ef4444, #dc2626); }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+
+  <!-- Header -->
+  <header class="bg-green-800 text-white p-4 md:p-5">
+    <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">EG</div>
+        <div>
+          <h1 class="text-lg md:text-2xl font-semibold">EverGreen Empire</h1>
+          <p id="greeting" class="text-xs md:text-sm opacity-90">Welcome, Chief Financial Officer</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <!-- Financial Summary Badge -->
+        <div id="financialSummary" class="hidden md:flex items-center gap-3 bg-white/10 p-2 rounded">
+          <div class="text-xs">Daily Revenue</div>
+          <div id="dailyRevenue" class="font-semibold">$0.00</div>
+        </div>
+
+        <div class="relative">
+          <button id="notifBtn" class="p-2 rounded-md bg-white/10 flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="hidden md:inline">Alerts</span>
+          </button>
+          <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">0</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-sm md:text-base">CFO</span>
+          <button id="logoutBtn" class="p-2 rounded-md bg-white/10 text-sm hover:bg-white/20 transition">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Auto Greet Modal -->
+  <div id="greetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
+      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+      </div>
+      <h3 class="text-2xl font-bold text-gray-900 mb-2" id="greetTime">Good Morning</h3>
+      <p class="text-gray-600 mb-2">Welcome back, <span class="font-semibold">Chief Financial Officer</span></p>
+      <p class="text-sm text-gray-500 mb-6">Ready to analyze today's financial performance?</p>
+      <button id="closeGreet" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
+        View Financial Dashboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="p-4 md:p-6 max-w-[1200px] mx-auto grid grid-cols-12 gap-6">
+    
+    <!-- Left Column - Financial Overview -->
+    <section class="col-span-12 lg:col-span-8 space-y-6">
+      
+      <!-- Financial KPIs -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <!-- Revenue Card -->
+        <div class="card bg-white p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Revenue</h3>
+            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-2" id="totalRevenue">$0.00</div>
+          <div class="flex items-center text-sm">
+            <span id="revenueTrend" class="financial-neutral">0% vs target</span>
+          </div>
+        </div>
+
+        <!-- Profit Margin -->
+        <div class="card bg-white p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Profit Margin</h3>
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-2" id="profitMargin">0%</div>
+          <div class="flex items-center text-sm">
+            <span id="marginStatus" class="financial-neutral">Industry avg: 12%</span>
+          </div>
+        </div>
+
+        <!-- Growth Rate -->
+        <div class="card bg-white p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Growth Rate</h3>
+            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+              </svg>
+            </div>
+          </div>
+          <div class="text-3xl font-bold text-gray-900 mb-2" id="growthRate">0%</div>
+          <div class="flex items-center text-sm">
+            <span id="growthTrend" class="financial-neutral">Monthly change</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Charts -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-6">
+          <h3 class="text-xl font-semibold">Financial Performance</h3>
+          <select id="chartPeriod" class="text-sm border rounded px-3 py-1">
+            <option value="7d">Last 7 Days</option>
+            <option value="30d">Last 30 Days</option>
+            <option value="90d">Last 90 Days</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Revenue Trend</h4>
+            <canvas id="revenueChart" height="200"></canvas>
+          </div>
+          <div>
+            <h4 class="text-sm font-medium text-gray-700 mb-3">Profit Analysis</h4>
+            <canvas id="profitChart" height="200"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Financial Tools -->
+      <div class="card bg-white p-6">
+        <h3 class="text-xl font-semibold mb-6">Financial Tools</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- ROI Calculator -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">ROI Calculator</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Investment Amount</label>
+                <input type="number" id="investmentAmount" class="w-full p-2 border rounded" placeholder="1000" value="1000">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Return Amount</label>
+                <input type="number" id="returnAmount" class="w-full p-2 border rounded" placeholder="1200" value="1200">
+              </div>
+              <button onclick="calculateROI()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                Calculate ROI
+              </button>
+              <div id="roiResult" class="text-center p-2 bg-gray-50 rounded hidden">
+                <div class="text-lg font-semibold" id="roiValue">0%</div>
+                <div class="text-sm text-gray-600">Return on Investment</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Break-even Analysis -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Break-even Analysis</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Fixed Costs</label>
+                <input type="number" id="fixedCosts" class="w-full p-2 border rounded" placeholder="5000" value="5000">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Price per Unit</label>
+                <input type="number" id="pricePerUnit" class="w-full p-2 border rounded" placeholder="100" value="100">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Variable Cost per Unit</label>
+                <input type="number" id="variableCost" class="w-full p-2 border rounded" placeholder="40" value="40">
+              </div>
+              <button onclick="calculateBreakEven()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                Calculate Break-even
+              </button>
+              <div id="breakEvenResult" class="text-center p-2 bg-gray-50 rounded hidden">
+                <div class="text-lg font-semibold" id="breakEvenValue">0 units</div>
+                <div class="text-sm text-gray-600">Break-even Point</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Revenue Projection -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Revenue Projection</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Current Revenue</label>
+                <input type="number" id="currentRevenue" class="w-full p-2 border rounded" placeholder="10000" value="10000">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Growth Rate (%)</label>
+                <input type="number" id="growthRateInput" class="w-full p-2 border rounded" placeholder="10" value="10" step="0.1">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Period (months)</label>
+                <input type="number" id="projectionPeriod" class="w-full p-2 border rounded" placeholder="12" value="12">
+              </div>
+              <button onclick="calculateProjection()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                Project Revenue
+              </button>
+              <div id="projectionResult" class="text-center p-2 bg-gray-50 rounded hidden">
+                <div class="text-lg font-semibold" id="projectionValue">$0</div>
+                <div class="text-sm text-gray-600">Projected Revenue</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cash Flow Forecast -->
+          <div class="border rounded-lg p-4">
+            <h4 class="font-semibold text-gray-900 mb-3">Cash Flow Forecast</h4>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Initial Cash</label>
+                <input type="number" id="initialCash" class="w-full p-2 border rounded" placeholder="50000" value="50000">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Monthly Inflow</label>
+                <input type="number" id="monthlyInflow" class="w-full p-2 border rounded" placeholder="20000" value="20000">
+              </div>
+              <div>
+                <label class="block text-sm text-gray-600 mb-1">Monthly Outflow</label>
+                <input type="number" id="monthlyOutflow" class="w-full p-2 border rounded" placeholder="15000" value="15000">
+              </div>
+              <button onclick="calculateCashFlow()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+                Forecast Cash Flow
+              </button>
+              <div id="cashFlowResult" class="text-center p-2 bg-gray-50 rounded hidden">
+                <div class="text-lg font-semibold" id="cashFlowValue">$0</div>
+                <div class="text-sm text-gray-600">6-month Forecast</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Column - Analytics & Messages -->
+    <aside class="col-span-12 lg:col-span-4 space-y-6">
+      
+      <!-- Performance Metrics -->
+      <div class="card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Performance Metrics</h3>
+        <div class="space-y-4">
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Cost per View</span>
+            <span class="font-semibold" id="costPerView">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Customer Acquisition Cost</span>
+            <span class="font-semibold" id="cac">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Lifetime Value</span>
+            <span class="font-semibold" id="ltv">$0.00</span>
+          </div>
+          <div class="flex justify-between items-center">
+            <span class="text-sm text-gray-600">Operating Margin</span>
+            <span class="font-semibold" id="operatingMargin">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Brand Performance -->
+      <div class="card bg-white p-6">
+        <h3 class="text-lg font-semibold mb-4">Top Performing Brands</h3>
+        <div id="topBrands" class="space-y-3">
+          <div class="text-center text-gray-500 py-4">Loading brand data...</div>
+        </div>
+      </div>
+
+      <!-- AI Financial Insights -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold">Financial Insights</h3>
+          <div class="text-sm text-gray-600">AI Powered</div>
+        </div>
+        <div id="financialInsights" class="min-h-[120px] p-4 bg-gray-50 rounded-lg border">
+          <div class="text-gray-500 text-sm">AI financial insights will appear here...</div>
+        </div>
+        <button onclick="generateFinancialInsights()" class="w-full mt-3 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
+          Generate Insights
+        </button>
+      </div>
+
+      <!-- Team Messaging -->
+      <div class="card bg-white p-6">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold">Team Communication</h3>
+          <div class="text-sm text-gray-600">Financial Updates</div>
+        </div>
+        <div id="messageList" class="max-h-44 overflow-auto space-y-2 mb-3 p-2 border rounded bg-gray-50"></div>
+        <form id="messageForm" class="space-y-3">
+          <input name="message" placeholder="Share financial update..." class="w-full p-2 border rounded" required />
+          <button type="submit" class="w-full bg-green-600 text-white rounded py-2 hover:bg-green-700 transition">
+            Send Update
+          </button>
+        </form>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+  /**************************************************************************
+   * CONFIGURATION
+   **************************************************************************/
+  const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
+  const RPM_PER_1000 = 0.12;
+
+  /**************************************************************************
+   * Initialize Supabase
+   **************************************************************************/
+  const { createClient } = supabase;
+  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // DOM references
+  let greetingEl, financialSummary, dailyRevenue, totalRevenue, revenueTrend;
+  let profitMargin, marginStatus, growthRate, growthTrend;
+  let revenueChart, profitChart, topBrands, financialInsights, messageList;
+  let notifBadge, notifList, notifBtn, notifPanel;
+
+  // Charts
+  let revenueChartInstance, profitChartInstance;
+
+  // Data storage
+  let latestBrands = [], latestVideos = [], latestMessages = [];
+
+  /**************************************************************************
+   * Authentication & Auto Greet
+   **************************************************************************/
+  async function checkAuth() {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) {
+      window.location.href = 'index.html';
+      return null;
+    }
+    return session.user;
+  }
+
+  function showAutoGreet() {
+    const now = new Date();
+    const hour = now.getHours();
+    let greeting = 'Good Morning';
+    
+    if (hour >= 12 && hour < 17) {
+      greeting = 'Good Afternoon';
+    } else if (hour >= 17) {
+      greeting = 'Good Evening';
+    }
+
+    document.getElementById('greetTime').textContent = greeting;
+    document.getElementById('greetModal').classList.remove('hidden');
+  }
+
+  function setupAutoGreet() {
+    document.getElementById('closeGreet').addEventListener('click', () => {
+      document.getElementById('greetModal').classList.add('hidden');
+    });
+
+    // Show greet modal on first load
+    setTimeout(showAutoGreet, 1000);
+  }
+
+  /**************************************************************************
+   * Financial Calculations
+   **************************************************************************/
+  function computeFinancialMetrics(brands, videos) {
+    const brandViews = brands.reduce((s, r) => s + Number(r.views_28d || 0), 0);
+    const videoViews = videos.reduce((s, r) => s + Number(r.views_28d || 0), 0);
+    const totalViews = brandViews + videoViews;
+    const revenue = (totalViews / 1000) * RPM_PER_1000;
+    
+    // Simulate financial metrics based on views
+    const profitMargin = Math.min(25, Math.max(5, (revenue / 100) * 15));
+    const growthRate = Math.min(50, Math.max(-10, (totalViews / 10000) * 20));
+    const dailyRevenue = revenue / 30;
+    
+    return {
+      totalRevenue: revenue,
+      dailyRevenue: dailyRevenue,
+      profitMargin: profitMargin,
+      growthRate: growthRate,
+      totalViews: totalViews
+    };
+  }
+
+  function updateFinancialKPIs(metrics) {
+    totalRevenue.textContent = formatUSD(metrics.totalRevenue);
+    dailyRevenue.textContent = formatUSD(metrics.dailyRevenue);
+    profitMargin.textContent = `${metrics.profitMargin.toFixed(1)}%`;
+    growthRate.textContent = `${metrics.growthRate.toFixed(1)}%`;
+
+    // Update trends with colors
+    revenueTrend.textContent = `${Math.abs(metrics.growthRate).toFixed(1)}% vs target`;
+    revenueTrend.className = metrics.growthRate >= 0 ? 'financial-positive' : 'financial-negative';
+
+    growthTrend.textContent = 'Monthly change';
+    growthTrend.className = metrics.growthRate >= 0 ? 'financial-positive' : 'financial-negative';
+
+    // Show financial summary badge
+    financialSummary.classList.remove('hidden');
+  }
+
+  /**************************************************************************
+   * Financial Tools Calculations
+   **************************************************************************/
+  function calculateROI() {
+    const investment = parseFloat(document.getElementById('investmentAmount').value) || 0;
+    const returns = parseFloat(document.getElementById('returnAmount').value) || 0;
+    
+    if (investment === 0) {
+      alert('Please enter an investment amount');
+      return;
+    }
+
+    const roi = ((returns - investment) / investment) * 100;
+    const resultDiv = document.getElementById('roiResult');
+    const roiValue = document.getElementById('roiValue');
+
+    roiValue.textContent = `${roi.toFixed(1)}%`;
+    roiValue.className = `text-lg font-semibold ${roi >= 0 ? 'financial-positive' : 'financial-negative'}`;
+    resultDiv.classList.remove('hidden');
+  }
+
+  function calculateBreakEven() {
+    const fixedCosts = parseFloat(document.getElementById('fixedCosts').value) || 0;
+    const price = parseFloat(document.getElementById('pricePerUnit').value) || 0;
+    const variableCost = parseFloat(document.getElementById('variableCost').value) || 0;
+
+    if (price <= variableCost) {
+      alert('Price must be greater than variable cost per unit');
+      return;
+    }
+
+    const breakEvenUnits = fixedCosts / (price - variableCost);
+    const resultDiv = document.getElementById('breakEvenResult');
+    const breakEvenValue = document.getElementById('breakEvenValue');
+
+    breakEvenValue.textContent = `${Math.ceil(breakEvenUnits)} units`;
+    resultDiv.classList.remove('hidden');
+  }
+
+  function calculateProjection() {
+    const current = parseFloat(document.getElementById('currentRevenue').value) || 0;
+    const growth = parseFloat(document.getElementById('growthRateInput').value) || 0;
+    const period = parseInt(document.getElementById('projectionPeriod').value) || 0;
+
+    const projected = current * Math.pow(1 + growth/100, period);
+    const resultDiv = document.getElementById('projectionResult');
+    const projectionValue = document.getElementById('projectionValue');
+
+    projectionValue.textContent = formatUSD(projected);
+    resultDiv.classList.remove('hidden');
+  }
+
+  function calculateCashFlow() {
+    const initial = parseFloat(document.getElementById('initialCash').value) || 0;
+    const inflow = parseFloat(document.getElementById('monthlyInflow').value) || 0;
+    const outflow = parseFloat(document.getElementById('monthlyOutflow').value) || 0;
+
+    const monthlyNet = inflow - outflow;
+    const sixMonthForecast = initial + (monthlyNet * 6);
+    
+    const resultDiv = document.getElementById('cashFlowResult');
+    const cashFlowValue = document.getElementById('cashFlowValue');
+
+    cashFlowValue.textContent = formatUSD(sixMonthForecast);
+    cashFlowValue.className = `text-lg font-semibold ${sixMonthForecast >= 0 ? 'financial-positive' : 'financial-negative'}`;
+    resultDiv.classList.remove('hidden');
+  }
+
+  /**************************************************************************
+   * Charts Initialization
+   **************************************************************************/
+  function initCharts() {
+    // Revenue Trend Chart
+    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+    revenueChartInstance = new Chart(revenueCtx, {
+      type: 'line',
+      data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+          label: 'Monthly Revenue',
+          data: [12000, 19000, 15000, 25000, 22000, 30000],
+          borderColor: '#059669',
+          backgroundColor: 'rgba(5, 150, 105, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.1)' }
+          }
+        }
+      }
+    });
+
+    // Profit Analysis Chart
+    const profitCtx = document.getElementById('profitChart').getContext('2d');
+    profitChartInstance = new Chart(profitCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+        datasets: [{
+          label: 'Profit',
+          data: [45000, 52000, 48000, 61000],
+          backgroundColor: '#10b981',
+          borderColor: '#059669',
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false }
+        }
+      }
+    });
+  }
+
+  /**************************************************************************
+   * Data Rendering
+   **************************************************************************/
+  function renderTopBrands(brands) {
+    const topBrandsContainer = document.getElementById('topBrands');
+    
+    if (brands.length === 0) {
+      topBrandsContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No brand data available</div>';
+      return;
+    }
+
+    // Sort brands by 28-day views and take top 5
+    const topBrands = brands
+      .sort((a, b) => (b.views_28d || 0) - (a.views_28d || 0))
+      .slice(0, 5);
+
+    topBrandsContainer.innerHTML = topBrands.map(brand => `
+      <div class="flex items-center justify-between p-3 border rounded-lg fade-in hover:bg-gray-50">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded bg-green-100 flex items-center justify-center font-semibold text-green-700 text-sm">
+            ${(brand.name||'')[0]?.toUpperCase() || '?'}
+          </div>
+          <div>
+            <div class="font-medium text-sm">${brand.name}</div>
+            <div class="text-xs text-gray-500">${numberWithCommas(brand.views_28d || 0)} views</div>
+          </div>
+        </div>
+        <div class="text-sm font-semibold financial-positive">
+          ${formatUSD(((brand.views_28d || 0) / 1000) * RPM_PER_1000)}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  /**************************************************************************
+   * AI Financial Insights
+   **************************************************************************/
+  async function generateFinancialInsights() {
+    const insightsDiv = document.getElementById('financialInsights');
+    
+    insightsDiv.innerHTML = `
+      <div class="flex items-center justify-center space-x-2">
+        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
+        <span class="text-gray-600">Analyzing financial data...</span>
+      </div>
+    `;
+
+    // Simulate AI analysis with realistic financial insights
+    setTimeout(() => {
+      const metrics = computeFinancialMetrics(latestBrands, latestVideos);
+      const insights = [
+        `Revenue growth trending at ${metrics.growthRate.toFixed(1)}% monthly - consider scaling successful content`,
+        `Current profit margin of ${metrics.profitMargin.toFixed(1)}% exceeds industry average of 12%`,
+        `Top 3 brands generate 65% of total revenue - focus resources on high performers`,
+        `Customer acquisition cost optimized at $2.45 per new viewer`,
+        `Recommend increasing RPM through premium content partnerships`
+      ];
+
+      insightsDiv.innerHTML = `
+        <div class="space-y-2">
+          ${insights.map(insight => `
+            <div class="p-2 bg-white rounded border-l-4 border-green-500 text-sm">
+              ${insight}
+            </div>
+          `).join('')}
+        </div>
+      `;
+    }, 2000);
+  }
+
+  /**************************************************************************
+   * Messaging System
+   **************************************************************************/
+  async function fetchMessagesAndRender() {
+    try {
+      const { data, error } = await supabaseClient
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+      
+      if (error) throw error;
+      
+      latestMessages = data || [];
+      renderMessages(latestMessages);
+      updateNotifications(latestMessages);
+    } catch (e) { 
+      console.error('fetchMessages error:', e);
+      renderMessages([]);
+      updateNotifications([]);
+    }
+  }
+
+  function renderMessages(messages) {
+    messageList.innerHTML = '';
+    
+    if (messages.length === 0) {
+      messageList.innerHTML = '<div class="text-center text-gray-500 py-4">No messages yet</div>';
+      return;
+    }
+
+    messages.forEach(m => {
+      const div = document.createElement('div');
+      div.className = 'p-2 border-b fade-in hover:bg-white cursor-pointer';
+      div.innerHTML = `
+        <div class="flex justify-between items-start">
+          <div class="flex-1">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="font-semibold text-green-600 text-sm">${m.sender || 'Unknown'}</span>
+            </div>
+            <div class="text-gray-700 text-xs">${m.message}</div>
+          </div>
+          <div class="text-xs text-gray-400 whitespace-nowrap ml-2">
+            ${new Date(m.created_at).toLocaleTimeString()}
+          </div>
+        </div>
+      `;
+      
+      messageList.appendChild(div);
+    });
+  }
+
+  function updateNotifications(messages) {
+    const unread = messages.filter(m => !m.read).length;
+    notifBadge.textContent = unread;
+    
+    if (unread === 0) {
+      notifBadge.classList.add('hidden');
+    } else {
+      notifBadge.classList.remove('hidden');
+    }
+  }
+
+  /**************************************************************************
+   * Utility Functions
+   **************************************************************************/
+  function numberWithCommas(x) { 
+    return x?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? '0'; 
+  }
+  
+  function formatUSD(x) { 
+    return '$' + Number(x || 0).toFixed(2); 
+  }
+
+  /**************************************************************************
+   * Event Handlers & Setup
+   **************************************************************************/
+  function setupEventListeners() {
+    // Message form
+    document.getElementById('messageForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const message = formData.get('message');
+
+      try {
+        const { error } = await supabaseClient.from('messages').insert([{
+          sender: 'CFO',
+          receiver: 'All',
+          message: message,
+          read: false,
+          created_at: new Date().toISOString()
+        }]);
+
+        if (error) throw error;
+        
+        alert('Financial update sent!');
+        e.target.reset();
+        fetchMessagesAndRender();
+      } catch (error) {
+        console.error('Send message error:', error);
+        alert('Failed to send message: ' + error.message);
+      }
+    });
+
+    // Notifications
+    notifBtn.addEventListener('click', () => {
+      notifPanel.classList.toggle('hidden');
+    });
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      try {
+        await supabaseClient.auth.signOut();
+        sessionStorage.clear();
+        window.location.href = 'index.html';
+      } catch (e) { 
+        console.error(e); 
+        alert('Sign out failed: ' + e.message); 
+      }
+    });
+  }
+
+  /**************************************************************************
+   * Data Fetching & Real-time
+   **************************************************************************/
+  async function fetchAndRenderAll() {
+    try {
+      const [{ data: brands, error: brandsError }, 
+             { data: videos, error: videosError }] = await Promise.all([
+        supabaseClient.from('brands').select('*').order('views_28d', { ascending: false }),
+        supabaseClient.from('videos').select('*').order('views_28d', { ascending: false })
+      ]);
+
+      if (brandsError) throw brandsError;
+      if (videosError) throw videosError;
+
+      latestBrands = brands || [];
+      latestVideos = videos || [];
+      
+      const metrics = computeFinancialMetrics(latestBrands, latestVideos);
+      updateFinancialKPIs(metrics);
+      renderTopBrands(latestBrands);
+      
+    } catch (e) { 
+      console.error('fetchAll error:', e);
+      renderTopBrands([]);
+    }
+  }
+
+  function setupRealtime() {
+    try {
+      supabaseClient.channel('cfo-brands')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'brands' }, () => {
+          console.log('Brands updated - refreshing CFO data');
+          fetchAndRenderAll();
+        })
+        .subscribe();
+
+      supabaseClient.channel('cfo-messages')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
+          console.log('Messages updated - refreshing CFO messages');
+          fetchMessagesAndRender();
+        })
+        .subscribe();
+
+      console.log('CFO real-time subscriptions activated!');
+    } catch (e) { 
+      console.warn('Realtime setup failed:', e); 
+    }
+  }
+
+  /**************************************************************************
+   * Initialization
+   **************************************************************************/
+  function initializeDOMReferences() {
+    greetingEl = document.getElementById('greeting');
+    financialSummary = document.getElementById('financialSummary');
+    dailyRevenue = document.getElementById('dailyRevenue');
+    totalRevenue = document.getElementById('totalRevenue');
+    revenueTrend = document.getElementById('revenueTrend');
+    profitMargin = document.getElementById('profitMargin');
+    marginStatus = document.getElementById('marginStatus');
+    growthRate = document.getElementById('growthRate');
+    growthTrend = document.getElementById('growthTrend');
+    topBrands = document.getElementById('topBrands');
+    financialInsights = document.getElementById('financialInsights');
+    messageList = document.getElementById('messageList');
+    notifBadge = document.getElementById('notifBadge');
+    notifList = document.getElementById('notifList');
+    notifBtn = document.getElementById('notifBtn');
+    notifPanel = document.getElementById('notifPanel');
+  }
+
+  /**************************************************************************
+   * Main Boot Function
+   **************************************************************************/
+  async function boot() {
+    console.log('💰 Initializing CFO Portal...');
+    
+    // Check authentication
+    const user = await checkAuth();
+    if (!user) return;
+    
+    // Initialize DOM references
+    initializeDOMReferences();
+    
+    // Setup features
+    setupAutoGreet();
+    initCharts();
+    setupEventListeners();
+    
+    // Load data
+    try {
+      await fetchAndRenderAll();
+      await fetchMessagesAndRender();
+      setupRealtime();
+      console.log('✅ CFO Portal initialized successfully!');
+    } catch (e) {
+      console.error('❌ CFO boot error:', e);
+    }
+  }
+
+  // Start the application
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    boot();
+  }
+  </script>
+</body>
+</html>
