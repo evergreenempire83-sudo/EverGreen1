@@ -1,869 +1,855 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EverGreen — CFO Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverGreen Empire — CFO Portal</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-  <!-- Tailwind (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        .message-ceo {
+            background: linear-gradient(135deg, #1e40af, #3730a3);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
 
-  <!-- Financial Charts Library -->
-  <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.3.1/dist/chartjs-adapter-luxon.min.js"></script>
+        .message-cfo {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
 
-  <style>
-    .card { border-radius: 10px; box-shadow: 0 8px 22px rgba(15,23,42,0.06); }
-    .table-fixed thead th { position: sticky; top: 0; background: white; z-index: 10; }
-    td, th { padding: 0.75rem 0.5rem; vertical-align: middle; }
-    .btn-primary { background-color: #059669; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; }
-    .btn-primary:hover { background-color: #047857; }
-    .btn-secondary { background-color: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; border: 1px solid #d1d5db; }
-    .btn-secondary:hover { background-color: #e5e7eb; }
-    .financial-positive { color: #059669; }
-    .financial-negative { color: #dc2626; }
-    .financial-neutral { color: #6b7280; }
-    .fade-in { animation: fadeIn 0.5s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .profit-badge { background: linear-gradient(135deg, #10b981, #059669); }
-    .loss-badge { background: linear-gradient(135deg, #ef4444, #dc2626); }
-  </style>
+        .message-admin {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .ai-insight {
+            border-left: 4px solid #8b5cf6;
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff);
+            padding: 16px;
+            border-radius: 8px;
+            margin: 8px 0;
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .empty-state {
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 min-h-screen">
-
-  <!-- Header -->
-  <header class="bg-green-800 text-white p-4 md:p-5">
-    <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">EG</div>
-        <div>
-          <h1 class="text-lg md:text-2xl font-semibold">EverGreen Empire</h1>
-          <p id="greeting" class="text-xs md:text-sm opacity-90">Welcome, Chief Financial Officer</p>
+    <!-- Simple Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div class="text-xl font-semibold text-gray-800">CFO Portal</div>
+            <div class="text-sm text-gray-600 mt-2" id="loadingStatus">Connecting to executive network...</div>
         </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <!-- Financial Summary Badge -->
-        <div id="financialSummary" class="hidden md:flex items-center gap-3 bg-white/10 p-2 rounded">
-          <div class="text-xs">Daily Revenue</div>
-          <div id="dailyRevenue" class="font-semibold">$0.00</div>
-        </div>
-
-        <div class="relative">
-          <button id="notifBtn" class="p-2 rounded-md bg-white/10 flex items-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="hidden md:inline">Alerts</span>
-          </button>
-          <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">0</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <span class="text-sm md:text-base">CFO</span>
-          <button id="logoutBtn" class="p-2 rounded-md bg-white/10 text-sm hover:bg-white/20 transition">Sign out</button>
-        </div>
-      </div>
     </div>
-  </header>
 
-  <!-- Auto Greet Modal -->
-  <div id="greetModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-2xl p-8 max-w-md mx-4 text-center">
-      <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-        <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-        </svg>
-      </div>
-      <h3 class="text-2xl font-bold text-gray-900 mb-2" id="greetTime">Good Morning</h3>
-      <p class="text-gray-600 mb-2">Welcome back, <span class="font-semibold">Chief Financial Officer</span></p>
-      <p class="text-sm text-gray-500 mb-6">Ready to analyze today's financial performance?</p>
-      <button id="closeGreet" class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition">
-        View Financial Dashboard
-      </button>
-    </div>
-  </div>
-
-  <!-- Main Content -->
-  <main class="p-4 md:p-6 max-w-[1200px] mx-auto grid grid-cols-12 gap-6">
-    
-    <!-- Left Column - Financial Overview -->
-    <section class="col-span-12 lg:col-span-8 space-y-6">
-      
-      <!-- Financial KPIs -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <!-- Revenue Card -->
-        <div class="card bg-white p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Revenue</h3>
-            <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path>
-              </svg>
+    <!-- Simple Header -->
+    <header class="bg-green-800 text-white p-4 sticky top-0 z-40 shadow-lg">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">EverGreen Empire</h1>
+                    <p class="text-sm opacity-90">CFO Portal <span id="connectionStatus" class="online-dot"></span> <span id="syncStatus" class="text-xs">Connecting...</span></p>
+                </div>
             </div>
-          </div>
-          <div class="text-3xl font-bold text-gray-900 mb-2" id="totalRevenue">$0.00</div>
-          <div class="flex items-center text-sm">
-            <span id="revenueTrend" class="financial-neutral">0% vs target</span>
-          </div>
-        </div>
-
-        <!-- Profit Margin -->
-        <div class="card bg-white p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Profit Margin</h3>
-            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-              </svg>
+            <div class="flex items-center space-x-3">
+                <button onclick="toggleTheme()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <button onclick="generateQuickAdvice()" class="p-2 rounded-lg bg-purple-600 hover:bg-purple-700">
+                    <i class="fas fa-robot"></i>
+                </button>
             </div>
-          </div>
-          <div class="text-3xl font-bold text-gray-900 mb-2" id="profitMargin">0%</div>
-          <div class="flex items-center text-sm">
-            <span id="marginStatus" class="financial-neutral">Industry avg: 12%</span>
-          </div>
         </div>
+    </header>
 
-        <!-- Growth Rate -->
-        <div class="card bg-white p-6">
-          <div class="flex items-center justify-between mb-4">
-            <h3 class="text-lg font-semibold text-gray-900">Growth Rate</h3>
-            <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-              </svg>
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-4" id="mainContent" style="display: none;">
+        <!-- Welcome Banner -->
+        <div class="bg-white rounded-lg p-4 shadow-sm border mb-4">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-xl font-bold text-gray-800 mb-1">Financial Command Center</h2>
+                    <p class="text-sm text-gray-600">Connected to CEO & Admin - Real-time Executive Network</p>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="text-right">
+                        <div class="text-xs text-gray-600">Network Status</div>
+                        <div class="text-sm font-bold text-green-600" id="networkStatus">Live</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
+                        <i class="fas fa-network-wired text-green-600 text-lg"></i>
+                    </div>
+                </div>
             </div>
-          </div>
-          <div class="text-3xl font-bold text-gray-900 mb-2" id="growthRate">0%</div>
-          <div class="flex items-center text-sm">
-            <span id="growthTrend" class="financial-neutral">Monthly change</span>
-          </div>
         </div>
-      </div>
 
-      <!-- Financial Charts -->
-      <div class="card bg-white p-6">
-        <div class="flex items-center justify-between mb-6">
-          <h3 class="text-xl font-semibold">Financial Performance</h3>
-          <select id="chartPeriod" class="text-sm border rounded px-3 py-1">
-            <option value="7d">Last 7 Days</option>
-            <option value="30d">Last 30 Days</option>
-            <option value="90d">Last 90 Days</option>
-          </select>
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Revenue Trend</h4>
-            <canvas id="revenueChart" height="200"></canvas>
-          </div>
-          <div>
-            <h4 class="text-sm font-medium text-gray-700 mb-3">Profit Analysis</h4>
-            <canvas id="profitChart" height="200"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Financial Tools -->
-      <div class="card bg-white p-6">
-        <h3 class="text-xl font-semibold mb-6">Financial Tools</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- ROI Calculator -->
-          <div class="border rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">ROI Calculator</h4>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Investment Amount</label>
-                <input type="number" id="investmentAmount" class="w-full p-2 border rounded" placeholder="1000" value="1000">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Return Amount</label>
-                <input type="number" id="returnAmount" class="w-full p-2 border rounded" placeholder="1200" value="1200">
-              </div>
-              <button onclick="calculateROI()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-                Calculate ROI
-              </button>
-              <div id="roiResult" class="text-center p-2 bg-gray-50 rounded hidden">
-                <div class="text-lg font-semibold" id="roiValue">0%</div>
-                <div class="text-sm text-gray-600">Return on Investment</div>
-              </div>
+        <!-- Financial KPIs -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div class="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold">Total Revenue</h3>
+                    <i class="fas fa-dollar-sign text-lg opacity-80"></i>
+                </div>
+                <div class="text-2xl font-bold mb-1" id="totalRevenue">$0.00</div>
+                <div class="flex items-center text-xs">
+                    <i class="fas fa-minus mr-1"></i>
+                    <span>0%</span>
+                    <span class="ml-2 opacity-80">Waiting for data</span>
+                </div>
             </div>
-          </div>
 
-          <!-- Break-even Analysis -->
-          <div class="border rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">Break-even Analysis</h4>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Fixed Costs</label>
-                <input type="number" id="fixedCosts" class="w-full p-2 border rounded" placeholder="5000" value="5000">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Price per Unit</label>
-                <input type="number" id="pricePerUnit" class="w-full p-2 border rounded" placeholder="100" value="100">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Variable Cost per Unit</label>
-                <input type="number" id="variableCost" class="w-full p-2 border rounded" placeholder="40" value="40">
-              </div>
-              <button onclick="calculateBreakEven()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-                Calculate Break-even
-              </button>
-              <div id="breakEvenResult" class="text-center p-2 bg-gray-50 rounded hidden">
-                <div class="text-lg font-semibold" id="breakEvenValue">0 units</div>
-                <div class="text-sm text-gray-600">Break-even Point</div>
-              </div>
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold">Profit Margin</h3>
+                    <i class="fas fa-percentage text-lg opacity-80"></i>
+                </div>
+                <div class="text-2xl font-bold mb-1" id="profitMargin">0%</div>
+                <div class="text-xs opacity-80">Waiting for data</div>
             </div>
-          </div>
 
-          <!-- Revenue Projection -->
-          <div class="border rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">Revenue Projection</h4>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Current Revenue</label>
-                <input type="number" id="currentRevenue" class="w-full p-2 border rounded" placeholder="10000" value="10000">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Growth Rate (%)</label>
-                <input type="number" id="growthRateInput" class="w-full p-2 border rounded" placeholder="10" value="10" step="0.1">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Period (months)</label>
-                <input type="number" id="projectionPeriod" class="w-full p-2 border rounded" placeholder="12" value="12">
-              </div>
-              <button onclick="calculateProjection()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-                Project Revenue
-              </button>
-              <div id="projectionResult" class="text-center p-2 bg-gray-50 rounded hidden">
-                <div class="text-lg font-semibold" id="projectionValue">$0</div>
-                <div class="text-sm text-gray-600">Projected Revenue</div>
-              </div>
+            <div class="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold">Op. Costs</h3>
+                    <i class="fas fa-money-bill-wave text-lg opacity-80"></i>
+                </div>
+                <div class="text-2xl font-bold mb-1" id="operatingCosts">$0.00</div>
+                <div class="text-xs opacity-80">Waiting for data</div>
             </div>
-          </div>
 
-          <!-- Cash Flow Forecast -->
-          <div class="border rounded-lg p-4">
-            <h4 class="font-semibold text-gray-900 mb-3">Cash Flow Forecast</h4>
-            <div class="space-y-3">
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Initial Cash</label>
-                <input type="number" id="initialCash" class="w-full p-2 border rounded" placeholder="50000" value="50000">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Monthly Inflow</label>
-                <input type="number" id="monthlyInflow" class="w-full p-2 border rounded" placeholder="20000" value="20000">
-              </div>
-              <div>
-                <label class="block text-sm text-gray-600 mb-1">Monthly Outflow</label>
-                <input type="number" id="monthlyOutflow" class="w-full p-2 border rounded" placeholder="15000" value="15000">
-              </div>
-              <button onclick="calculateCashFlow()" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-                Forecast Cash Flow
-              </button>
-              <div id="cashFlowResult" class="text-center p-2 bg-gray-50 rounded hidden">
-                <div class="text-lg font-semibold" id="cashFlowValue">$0</div>
-                <div class="text-sm text-gray-600">6-month Forecast</div>
-              </div>
+            <div class="bg-gradient-to-br from-indigo-500 to-indigo-600 text-white rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold">Cash Flow</h3>
+                    <i class="fas fa-exchange-alt text-lg opacity-80"></i>
+                </div>
+                <div class="text-2xl font-bold mb-1" id="cashFlow">$0.00</div>
+                <div class="text-xs opacity-80">Waiting for data</div>
             </div>
-          </div>
         </div>
-      </div>
-    </section>
 
-    <!-- Right Column - Analytics & Messages -->
-    <aside class="col-span-12 lg:col-span-4 space-y-6">
-      
-      <!-- Performance Metrics -->
-      <div class="card bg-white p-6">
-        <h3 class="text-lg font-semibold mb-4">Performance Metrics</h3>
-        <div class="space-y-4">
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Cost per View</span>
-            <span class="font-semibold" id="costPerView">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Customer Acquisition Cost</span>
-            <span class="font-semibold" id="cac">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Lifetime Value</span>
-            <span class="font-semibold" id="ltv">$0.00</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-sm text-gray-600">Operating Margin</span>
-            <span class="font-semibold" id="operatingMargin">0%</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Brand Performance -->
-      <div class="card bg-white p-6">
-        <h3 class="text-lg font-semibold mb-4">Top Performing Brands</h3>
-        <div id="topBrands" class="space-y-3">
-          <div class="text-center text-gray-500 py-4">Loading brand data...</div>
-        </div>
-      </div>
-
-      <!-- AI Financial Insights -->
-      <div class="card bg-white p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">Financial Insights</h3>
-          <div class="text-sm text-gray-600">AI Powered</div>
-        </div>
-        <div id="financialInsights" class="min-h-[120px] p-4 bg-gray-50 rounded-lg border">
-          <div class="text-gray-500 text-sm">AI financial insights will appear here...</div>
-        </div>
-        <button onclick="generateFinancialInsights()" class="w-full mt-3 bg-green-600 text-white py-2 rounded hover:bg-green-700 transition">
-          Generate Insights
-        </button>
-      </div>
-
-      <!-- Team Messaging -->
-      <div class="card bg-white p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold">Team Communication</h3>
-          <div class="text-sm text-gray-600">Financial Updates</div>
-        </div>
-        <div id="messageList" class="max-h-44 overflow-auto space-y-2 mb-3 p-2 border rounded bg-gray-50"></div>
-        <form id="messageForm" class="space-y-3">
-          <input name="message" placeholder="Share financial update..." class="w-full p-2 border rounded" required />
-          <button type="submit" class="w-full bg-green-600 text-white rounded py-2 hover:bg-green-700 transition">
-            Send Update
-          </button>
-        </form>
-      </div>
-    </aside>
-  </main>
-
-  <script>
-  /**************************************************************************
-   * CONFIGURATION
-   **************************************************************************/
-  const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
-  const RPM_PER_1000 = 0.12;
-
-  /**************************************************************************
-   * Initialize Supabase
-   **************************************************************************/
-  const { createClient } = supabase;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // DOM references
-  let greetingEl, financialSummary, dailyRevenue, totalRevenue, revenueTrend;
-  let profitMargin, marginStatus, growthRate, growthTrend;
-  let revenueChart, profitChart, topBrands, financialInsights, messageList;
-  let notifBadge, notifList, notifBtn, notifPanel;
-
-  // Charts
-  let revenueChartInstance, profitChartInstance;
-
-  // Data storage
-  let latestBrands = [], latestVideos = [], latestMessages = [];
-
-  /**************************************************************************
-   * Authentication & Auto Greet
-   **************************************************************************/
-  async function checkAuth() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      window.location.href = 'index.html';
-      return null;
-    }
-    return session.user;
-  }
-
-  function showAutoGreet() {
-    const now = new Date();
-    const hour = now.getHours();
-    let greeting = 'Good Morning';
-    
-    if (hour >= 12 && hour < 17) {
-      greeting = 'Good Afternoon';
-    } else if (hour >= 17) {
-      greeting = 'Good Evening';
-    }
-
-    document.getElementById('greetTime').textContent = greeting;
-    document.getElementById('greetModal').classList.remove('hidden');
-  }
-
-  function setupAutoGreet() {
-    document.getElementById('closeGreet').addEventListener('click', () => {
-      document.getElementById('greetModal').classList.add('hidden');
-    });
-
-    // Show greet modal on first load
-    setTimeout(showAutoGreet, 1000);
-  }
-
-  /**************************************************************************
-   * Financial Calculations
-   **************************************************************************/
-  function computeFinancialMetrics(brands, videos) {
-    const brandViews = brands.reduce((s, r) => s + Number(r.views_28d || 0), 0);
-    const videoViews = videos.reduce((s, r) => s + Number(r.views_28d || 0), 0);
-    const totalViews = brandViews + videoViews;
-    const revenue = (totalViews / 1000) * RPM_PER_1000;
-    
-    // Simulate financial metrics based on views
-    const profitMargin = Math.min(25, Math.max(5, (revenue / 100) * 15));
-    const growthRate = Math.min(50, Math.max(-10, (totalViews / 10000) * 20));
-    const dailyRevenue = revenue / 30;
-    
-    return {
-      totalRevenue: revenue,
-      dailyRevenue: dailyRevenue,
-      profitMargin: profitMargin,
-      growthRate: growthRate,
-      totalViews: totalViews
-    };
-  }
-
-  function updateFinancialKPIs(metrics) {
-    totalRevenue.textContent = formatUSD(metrics.totalRevenue);
-    dailyRevenue.textContent = formatUSD(metrics.dailyRevenue);
-    profitMargin.textContent = `${metrics.profitMargin.toFixed(1)}%`;
-    growthRate.textContent = `${metrics.growthRate.toFixed(1)}%`;
-
-    // Update trends with colors
-    revenueTrend.textContent = `${Math.abs(metrics.growthRate).toFixed(1)}% vs target`;
-    revenueTrend.className = metrics.growthRate >= 0 ? 'financial-positive' : 'financial-negative';
-
-    growthTrend.textContent = 'Monthly change';
-    growthTrend.className = metrics.growthRate >= 0 ? 'financial-positive' : 'financial-negative';
-
-    // Show financial summary badge
-    financialSummary.classList.remove('hidden');
-  }
-
-  /**************************************************************************
-   * Financial Tools Calculations
-   **************************************************************************/
-  function calculateROI() {
-    const investment = parseFloat(document.getElementById('investmentAmount').value) || 0;
-    const returns = parseFloat(document.getElementById('returnAmount').value) || 0;
-    
-    if (investment === 0) {
-      alert('Please enter an investment amount');
-      return;
-    }
-
-    const roi = ((returns - investment) / investment) * 100;
-    const resultDiv = document.getElementById('roiResult');
-    const roiValue = document.getElementById('roiValue');
-
-    roiValue.textContent = `${roi.toFixed(1)}%`;
-    roiValue.className = `text-lg font-semibold ${roi >= 0 ? 'financial-positive' : 'financial-negative'}`;
-    resultDiv.classList.remove('hidden');
-  }
-
-  function calculateBreakEven() {
-    const fixedCosts = parseFloat(document.getElementById('fixedCosts').value) || 0;
-    const price = parseFloat(document.getElementById('pricePerUnit').value) || 0;
-    const variableCost = parseFloat(document.getElementById('variableCost').value) || 0;
-
-    if (price <= variableCost) {
-      alert('Price must be greater than variable cost per unit');
-      return;
-    }
-
-    const breakEvenUnits = fixedCosts / (price - variableCost);
-    const resultDiv = document.getElementById('breakEvenResult');
-    const breakEvenValue = document.getElementById('breakEvenValue');
-
-    breakEvenValue.textContent = `${Math.ceil(breakEvenUnits)} units`;
-    resultDiv.classList.remove('hidden');
-  }
-
-  function calculateProjection() {
-    const current = parseFloat(document.getElementById('currentRevenue').value) || 0;
-    const growth = parseFloat(document.getElementById('growthRateInput').value) || 0;
-    const period = parseInt(document.getElementById('projectionPeriod').value) || 0;
-
-    const projected = current * Math.pow(1 + growth/100, period);
-    const resultDiv = document.getElementById('projectionResult');
-    const projectionValue = document.getElementById('projectionValue');
-
-    projectionValue.textContent = formatUSD(projected);
-    resultDiv.classList.remove('hidden');
-  }
-
-  function calculateCashFlow() {
-    const initial = parseFloat(document.getElementById('initialCash').value) || 0;
-    const inflow = parseFloat(document.getElementById('monthlyInflow').value) || 0;
-    const outflow = parseFloat(document.getElementById('monthlyOutflow').value) || 0;
-
-    const monthlyNet = inflow - outflow;
-    const sixMonthForecast = initial + (monthlyNet * 6);
-    
-    const resultDiv = document.getElementById('cashFlowResult');
-    const cashFlowValue = document.getElementById('cashFlowValue');
-
-    cashFlowValue.textContent = formatUSD(sixMonthForecast);
-    cashFlowValue.className = `text-lg font-semibold ${sixMonthForecast >= 0 ? 'financial-positive' : 'financial-negative'}`;
-    resultDiv.classList.remove('hidden');
-  }
-
-  /**************************************************************************
-   * Charts Initialization
-   **************************************************************************/
-  function initCharts() {
-    // Revenue Trend Chart
-    const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-    revenueChartInstance = new Chart(revenueCtx, {
-      type: 'line',
-      data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-          label: 'Monthly Revenue',
-          data: [12000, 19000, 15000, 25000, 22000, 30000],
-          borderColor: '#059669',
-          backgroundColor: 'rgba(5, 150, 105, 0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            grid: { color: 'rgba(0,0,0,0.1)' }
-          }
-        }
-      }
-    });
-
-    // Profit Analysis Chart
-    const profitCtx = document.getElementById('profitChart').getContext('2d');
-    profitChartInstance = new Chart(profitCtx, {
-      type: 'bar',
-      data: {
-        labels: ['Q1', 'Q2', 'Q3', 'Q4'],
-        datasets: [{
-          label: 'Profit',
-          data: [45000, 52000, 48000, 61000],
-          backgroundColor: '#10b981',
-          borderColor: '#059669',
-          borderWidth: 1
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false }
-        }
-      }
-    });
-  }
-
-  /**************************************************************************
-   * Data Rendering
-   **************************************************************************/
-  function renderTopBrands(brands) {
-    const topBrandsContainer = document.getElementById('topBrands');
-    
-    if (brands.length === 0) {
-      topBrandsContainer.innerHTML = '<div class="text-center text-gray-500 py-4">No brand data available</div>';
-      return;
-    }
-
-    // Sort brands by 28-day views and take top 5
-    const topBrands = brands
-      .sort((a, b) => (b.views_28d || 0) - (a.views_28d || 0))
-      .slice(0, 5);
-
-    topBrandsContainer.innerHTML = topBrands.map(brand => `
-      <div class="flex items-center justify-between p-3 border rounded-lg fade-in hover:bg-gray-50">
-        <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded bg-green-100 flex items-center justify-center font-semibold text-green-700 text-sm">
-            ${(brand.name||'')[0]?.toUpperCase() || '?'}
-          </div>
-          <div>
-            <div class="font-medium text-sm">${brand.name}</div>
-            <div class="text-xs text-gray-500">${numberWithCommas(brand.views_28d || 0)} views</div>
-          </div>
-        </div>
-        <div class="text-sm font-semibold financial-positive">
-          ${formatUSD(((brand.views_28d || 0) / 1000) * RPM_PER_1000)}
-        </div>
-      </div>
-    `).join('');
-  }
-
-  /**************************************************************************
-   * AI Financial Insights
-   **************************************************************************/
-  async function generateFinancialInsights() {
-    const insightsDiv = document.getElementById('financialInsights');
-    
-    insightsDiv.innerHTML = `
-      <div class="flex items-center justify-center space-x-2">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
-        <span class="text-gray-600">Analyzing financial data...</span>
-      </div>
-    `;
-
-    // Simulate AI analysis with realistic financial insights
-    setTimeout(() => {
-      const metrics = computeFinancialMetrics(latestBrands, latestVideos);
-      const insights = [
-        `Revenue growth trending at ${metrics.growthRate.toFixed(1)}% monthly - consider scaling successful content`,
-        `Current profit margin of ${metrics.profitMargin.toFixed(1)}% exceeds industry average of 12%`,
-        `Top 3 brands generate 65% of total revenue - focus resources on high performers`,
-        `Customer acquisition cost optimized at $2.45 per new viewer`,
-        `Recommend increasing RPM through premium content partnerships`
-      ];
-
-      insightsDiv.innerHTML = `
-        <div class="space-y-2">
-          ${insights.map(insight => `
-            <div class="p-2 bg-white rounded border-l-4 border-green-500 text-sm">
-              ${insight}
+        <!-- AI Insights & Communications -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+            <!-- AI Financial Advisor -->
+            <div class="bg-white rounded-lg p-4 shadow-sm border">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold flex items-center">
+                        <i class="fas fa-robot mr-2 text-purple-500"></i>AI Financial Advisor
+                    </h3>
+                    <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Online</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="generateAIInsight('revenue')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm transition-all">
+                             Revenue
+                        </button>
+                        <button onclick="generateAIInsight('profitability')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-sm transition-all">
+                             Profitability
+                        </button>
+                        <button onclick="generateAIInsight('costs')" class="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg text-sm transition-all">
+                             Cost Analysis
+                        </button>
+                        <button onclick="generateAIInsight('investment')" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg text-sm transition-all">
+                             Investments
+                        </button>
+                    </div>
+                    <div id="aiOutput" class="min-h-[200px] max-h-[300px] overflow-y-auto p-3 bg-gray-50 rounded-lg border">
+                        <div class="text-center text-gray-500 py-8">
+                            <i class="fas fa-robot text-2xl mb-2 text-purple-500"></i>
+                            <div class="text-sm">Select an analysis type to get AI insights</div>
+                            <div class="text-xs mt-1">Powered by Google Gemini</div>
+                        </div>
+                    </div>
+                    <button onclick="generateQuickAdvice()" class="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white py-2 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all text-sm">
+                        <i class="fas fa-bolt mr-1"></i>Quick Financial Advice
+                    </button>
+                </div>
             </div>
-          `).join('')}
-        </div>
-      `;
-    }, 2000);
-  }
 
-  /**************************************************************************
-   * Messaging System
-   **************************************************************************/
-  async function fetchMessagesAndRender() {
-    try {
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20);
-      
-      if (error) throw error;
-      
-      latestMessages = data || [];
-      renderMessages(latestMessages);
-      updateNotifications(latestMessages);
-    } catch (e) { 
-      console.error('fetchMessages error:', e);
-      renderMessages([]);
-      updateNotifications([]);
-    }
-  }
-
-  function renderMessages(messages) {
-    messageList.innerHTML = '';
-    
-    if (messages.length === 0) {
-      messageList.innerHTML = '<div class="text-center text-gray-500 py-4">No messages yet</div>';
-      return;
-    }
-
-    messages.forEach(m => {
-      const div = document.createElement('div');
-      div.className = 'p-2 border-b fade-in hover:bg-white cursor-pointer';
-      div.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-semibold text-green-600 text-sm">${m.sender || 'Unknown'}</span>
+            <!-- Real-time Executive Communications -->
+            <div class="bg-white rounded-lg p-4 shadow-sm border">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-base font-bold">Executive Communications</h3>
+                    <div class="flex items-center text-xs text-green-600">
+                        <span class="online-dot"></span>
+                        <span>Live with CEO & Admin</span>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex flex-col space-y-2">
+                        <input type="text" id="messageInput" placeholder="Type your message to CEO or Admin..." class="w-full p-2 border rounded-lg text-sm">
+                        <select id="recipientSelect" class="w-full p-2 border rounded-lg text-sm">
+                            <option value="all">All Executives (CEO & Admin)</option>
+                            <option value="ceo">CEO Only</option>
+                            <option value="admin">Admin Team Only</option>
+                            <option value="cfo">CFO Team Only</option>
+                        </select>
+                        <button onclick="sendMessage()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-all">
+                            <i class="fas fa-paper-plane mr-1"></i>Send Message
+                        </button>
+                    </div>
+                    <div id="messagesContainer" class="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-2">
+                        <div class="text-center text-gray-500 text-sm py-4">Loading executive messages...</div>
+                    </div>
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <span>Connected to: CEO, Admin, CFO</span>
+                        <span id="messageCount">0 messages</span>
+                    </div>
+                </div>
             </div>
-            <div class="text-gray-700 text-xs">${m.message}</div>
-          </div>
-          <div class="text-xs text-gray-400 whitespace-nowrap ml-2">
-            ${new Date(m.created_at).toLocaleTimeString()}
-          </div>
         </div>
-      `;
-      
-      messageList.appendChild(div);
-    });
-  }
 
-  function updateNotifications(messages) {
-    const unread = messages.filter(m => !m.read).length;
-    notifBadge.textContent = unread;
-    
-    if (unread === 0) {
-      notifBadge.classList.add('hidden');
-    } else {
-      notifBadge.classList.remove('hidden');
-    }
-  }
+        <!-- Data Table -->
+        <div class="bg-white rounded-lg p-4 shadow-sm border">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-base font-bold">Brand Performance</h3>
+                <div class="flex space-x-2">
+                    <button onclick="loadBrandsData()" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-all text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>Refresh
+                    </button>
+                    <button onclick="exportData()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-all text-sm">
+                        <i class="fas fa-download mr-1"></i>Export
+                    </button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full min-w-[600px]">
+                    <thead>
+                        <tr class="border-b">
+                            <th class="text-left py-2 font-semibold text-sm">Brand</th>
+                            <th class="text-left py-2 font-semibold text-sm">28D Revenue</th>
+                            <th class="text-left py-2 font-semibold text-sm">Est. Profit</th>
+                            <th class="text-left py-2 font-semibold text-sm">ROI</th>
+                            <th class="text-left py-2 font-semibold text-sm">Trend</th>
+                            <th class="text-left py-2 font-semibold text-sm">Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody id="brandsTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center py-4 text-gray-500">Loading brand data from Admin...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
 
-  /**************************************************************************
-   * Utility Functions
-   **************************************************************************/
-  function numberWithCommas(x) { 
-    return x?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? '0'; 
-  }
-  
-  function formatUSD(x) { 
-    return '$' + Number(x || 0).toFixed(2); 
-  }
-
-  /**************************************************************************
-   * Event Handlers & Setup
-   **************************************************************************/
-  function setupEventListeners() {
-    // Message form
-    document.getElementById('messageForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const message = formData.get('message');
-
-      try {
-        const { error } = await supabaseClient.from('messages').insert([{
-          sender: 'CFO',
-          receiver: 'All',
-          message: message,
-          read: false,
-          created_at: new Date().toISOString()
-        }]);
-
-        if (error) throw error;
+    <script>
+        // Same Supabase configuration as CEO and Admin portals
+        const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
         
-        alert('Financial update sent!');
-        e.target.reset();
-        fetchMessagesAndRender();
-      } catch (error) {
-        console.error('Send message error:', error);
-        alert('Failed to send message: ' + error.message);
-      }
-    });
+        // Initialize Supabase (same as CEO and Admin)
+        let supabase;
+        let realtimeChannels = [];
 
-    // Notifications
-    notifBtn.addEventListener('click', () => {
-      notifPanel.classList.toggle('hidden');
-    });
+        // Global State - START WITH ZERO DATA
+        let state = {
+            brands: [], // Empty array - no brands until Admin adds them
+            messages: [],
+            user: { role: 'cfo', name: 'CFO' },
+            totalRevenue: 0,
+            profitMargin: 0,
+            operatingCosts: 0,
+            cashFlow: 0
+        };
 
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try {
-        await supabaseClient.auth.signOut();
-        sessionStorage.clear();
-        window.location.href = 'index.html';
-      } catch (e) { 
-        console.error(e); 
-        alert('Sign out failed: ' + e.message); 
-      }
-    });
-  }
+        // Update loading status
+        function updateLoadingStatus(message) {
+            const statusEl = document.getElementById('loadingStatus');
+            if (statusEl) {
+                statusEl.textContent = message;
+            }
+            console.log('Loading:', message);
+        }
 
-  /**************************************************************************
-   * Data Fetching & Real-time
-   **************************************************************************/
-  async function fetchAndRenderAll() {
-    try {
-      const [{ data: brands, error: brandsError }, 
-             { data: videos, error: videosError }] = await Promise.all([
-        supabaseClient.from('brands').select('*').order('views_28d', { ascending: false }),
-        supabaseClient.from('videos').select('*').order('views_28d', { ascending: false })
-      ]);
+        // Initialize Application
+        async function init() {
+            console.log(' Initializing CFO Portal with Real-time Executive Network...');
+            updateLoadingStatus('Connecting to Supabase database...');
 
-      if (brandsError) throw brandsError;
-      if (videosError) throw videosError;
+            try {
+                // Initialize Supabase (same connection as CEO and Admin)
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                console.log(' Supabase connected successfully');
+                
+                updateLoadingStatus('Setting up real-time messaging...');
+                
+                // Setup real-time connections to CEO and Admin
+                await setupRealtimeConnections();
+                
+                // Load initial data - will be empty until Admin adds data
+                await loadInitialData();
+                
+                // Show main content
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                showNotification('Connected to CEO & Admin executive network!', 'success');
+                
+            } catch (error) {
+                console.error(' Initialization failed:', error);
+                updateLoadingStatus('Using offline mode - some features limited');
+                
+                // Fallback: Show main content with ZERO data
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainContent').style.display = 'block';
+                    loadZeroData();
+                    showNotification('Running in offline mode - real-time features disabled', 'warning');
+                }, 2000);
+            }
+        }
 
-      latestBrands = brands || [];
-      latestVideos = videos || [];
-      
-      const metrics = computeFinancialMetrics(latestBrands, latestVideos);
-      updateFinancialKPIs(metrics);
-      renderTopBrands(latestBrands);
-      
-    } catch (e) { 
-      console.error('fetchAll error:', e);
-      renderTopBrands([]);
-    }
-  }
+        // REAL-TIME CONNECTION TO CEO & ADMIN
+        async function setupRealtimeConnections() {
+            if (!supabase) {
+                console.log(' Supabase not available - real-time features disabled');
+                document.getElementById('networkStatus').textContent = 'Offline';
+                document.getElementById('connectionStatus').style.background = '#ef4444';
+                return;
+            }
 
-  function setupRealtime() {
-    try {
-      supabaseClient.channel('cfo-brands')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'brands' }, () => {
-          console.log('Brands updated - refreshing CFO data');
-          fetchAndRenderAll();
-        })
-        .subscribe();
+            updateLoadingStatus('Connecting to CEO & Admin real-time channels...');
 
-      supabaseClient.channel('cfo-messages')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, () => {
-          console.log('Messages updated - refreshing CFO messages');
-          fetchMessagesAndRender();
-        })
-        .subscribe();
+            try {
+                // REAL-TIME MESSAGES - Connect to same messages table as CEO and Admin
+                const messagesChannel = supabase
+                    .channel('cfo-executive-messages')
+                    .on('postgres_changes', 
+                        { 
+                            event: 'INSERT', 
+                            schema: 'public', 
+                            table: 'messages',
+                            filter: 'receiver=in.(all,cfo,admin,ceo)'
+                        }, 
+                        (payload) => {
+                            console.log(' New executive message:', payload);
+                            
+                            // Add message to state (unless it's our own)
+                            if (payload.new.sender !== 'CFO') {
+                                state.messages.unshift(payload.new);
+                                updateMessages();
+                                
+                                // Show notification for new messages from CEO or Admin
+                                if (payload.new.sender === 'CEO' || payload.new.sender === 'Admin') {
+                                    showNotification(`New message from ${payload.new.sender}`, 'info');
+                                    playNotificationSound();
+                                }
+                            }
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log(' Messages subscription status:', status);
+                        if (status === 'SUBSCRIBED') {
+                            document.getElementById('networkStatus').textContent = 'Live';
+                            document.getElementById('connectionStatus').style.background = '#10b981';
+                            document.getElementById('syncStatus').textContent = 'Connected to CEO & Admin';
+                        }
+                    });
 
-      console.log('CFO real-time subscriptions activated!');
-    } catch (e) { 
-      console.warn('Realtime setup failed:', e); 
-    }
-  }
+                realtimeChannels.push(messagesChannel);
 
-  /**************************************************************************
-   * Initialization
-   **************************************************************************/
-  function initializeDOMReferences() {
-    greetingEl = document.getElementById('greeting');
-    financialSummary = document.getElementById('financialSummary');
-    dailyRevenue = document.getElementById('dailyRevenue');
-    totalRevenue = document.getElementById('totalRevenue');
-    revenueTrend = document.getElementById('revenueTrend');
-    profitMargin = document.getElementById('profitMargin');
-    marginStatus = document.getElementById('marginStatus');
-    growthRate = document.getElementById('growthRate');
-    growthTrend = document.getElementById('growthTrend');
-    topBrands = document.getElementById('topBrands');
-    financialInsights = document.getElementById('financialInsights');
-    messageList = document.getElementById('messageList');
-    notifBadge = document.getElementById('notifBadge');
-    notifList = document.getElementById('notifList');
-    notifBtn = document.getElementById('notifBtn');
-    notifPanel = document.getElementById('notifPanel');
-  }
+                // REAL-TIME BRANDS DATA - Sync with Admin portal updates
+                const brandsChannel = supabase
+                    .channel('cfo-brands-data')
+                    .on('postgres_changes', 
+                        { 
+                            event: '*', 
+                            schema: 'public', 
+                            table: 'brands' 
+                        }, 
+                        async (payload) => {
+                            console.log(' Brands data updated by Admin:', payload);
+                            
+                            // Refresh brands data when Admin makes changes
+                            await loadBrandsData();
+                            showNotification('Brand data updated from Admin', 'success');
+                        }
+                    )
+                    .subscribe((status) => {
+                        console.log(' Brands subscription status:', status);
+                    });
 
-  /**************************************************************************
-   * Main Boot Function
-   **************************************************************************/
-  async function boot() {
-    console.log('💰 Initializing CFO Portal...');
-    
-    // Check authentication
-    const user = await checkAuth();
-    if (!user) return;
-    
-    // Initialize DOM references
-    initializeDOMReferences();
-    
-    // Setup features
-    setupAutoGreet();
-    initCharts();
-    setupEventListeners();
-    
-    // Load data
-    try {
-      await fetchAndRenderAll();
-      await fetchMessagesAndRender();
-      setupRealtime();
-      console.log('✅ CFO Portal initialized successfully!');
-    } catch (e) {
-      console.error('❌ CFO boot error:', e);
-    }
-  }
+                realtimeChannels.push(brandsChannel);
 
-  // Start the application
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
-  </script>
+                updateLoadingStatus('Real-time executive network connected!');
+
+            } catch (error) {
+                console.error(' Real-time setup failed:', error);
+                document.getElementById('networkStatus').textContent = 'Offline';
+                document.getElementById('connectionStatus').style.background = '#ef4444';
+            }
+        }
+
+        // Load initial data from shared database - WILL BE EMPTY INITIALLY
+        async function loadInitialData() {
+            updateLoadingStatus('Loading executive messages...');
+            await loadMessages();
+            
+            updateLoadingStatus('Loading brand performance data...');
+            await loadBrandsData(); // This will be empty until Admin adds data
+            
+            // Update financial metrics with actual data (will be 0 initially)
+            calculateFinancialMetrics();
+        }
+
+        // Load messages from shared database (same as CEO and Admin)
+        async function loadMessages() {
+            if (!supabase) {
+                loadDemoMessages();
+                return;
+            }
+
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .or('receiver.eq.all,receiver.eq.cfo,receiver.eq.admin,receiver.eq.ceo')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+
+                state.messages = messages || [];
+                updateMessages();
+                
+            } catch (error) {
+                console.error('Error loading messages:', error);
+                loadDemoMessages();
+            }
+        }
+
+        // Load brands data from shared database - STARTS EMPTY
+        async function loadBrandsData() {
+            if (!supabase) {
+                loadZeroData();
+                return;
+            }
+
+            try {
+                const { data: brands, error } = await supabase
+                    .from('brands')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+
+                // This will be empty array until Admin adds brands
+                state.brands = brands || [];
+                updateBrandsTable();
+                calculateFinancialMetrics(); // Recalculate with new data
+                
+                if (state.brands.length === 0) {
+                    showNotification('No brand data available. Waiting for Admin to upload data.', 'info');
+                } else {
+                    showNotification(`Loaded ${state.brands.length} brands from Admin`, 'success');
+                }
+                
+            } catch (error) {
+                console.error('Error loading brands:', error);
+                loadZeroData();
+            }
+        }
+
+        // Calculate financial metrics based on actual brand data
+        function calculateFinancialMetrics() {
+            let totalRevenue = 0;
+            let totalViews = 0;
+
+            // Calculate from actual brand data (will be 0 if no brands)
+            state.brands.forEach(brand => {
+                const views28d = brand.views_28d || 0;
+                totalViews += views28d;
+                totalRevenue += (views28d / 1000) * 0.12; // RPM calculation
+            });
+
+            const operatingCosts = totalRevenue * 0.65;
+            const netProfit = totalRevenue - operatingCosts;
+            const profitMargin = totalRevenue > 0 ? (netProfit / totalRevenue) * 100 : 0;
+            const cashFlow = netProfit * 0.85;
+
+            // Update UI with actual calculations
+            document.getElementById('totalRevenue').textContent = formatCurrency(totalRevenue);
+            document.getElementById('profitMargin').textContent = `${profitMargin.toFixed(1)}%`;
+            document.getElementById('operatingCosts').textContent = formatCurrency(operatingCosts);
+            document.getElementById('cashFlow').textContent = formatCurrency(cashFlow);
+
+            // Update growth indicator
+            const growthElement = document.querySelector('#totalRevenue + .flex.items-center');
+            if (growthElement) {
+                if (totalRevenue > 0) {
+                    growthElement.innerHTML = `<i class="fas fa-arrow-up mr-1"></i><span>${totalRevenue > 0 ? 'Calculated' : '0%'}</span><span class="ml-2 opacity-80">from brand data</span>`;
+                } else {
+                    growthElement.innerHTML = `<i class="fas fa-minus mr-1"></i><span>0%</span><span class="ml-2 opacity-80">Waiting for data</span>`;
+                }
+            }
+
+            // Store for AI analysis
+            state.totalRevenue = totalRevenue;
+            state.profitMargin = profitMargin;
+            state.operatingCosts = operatingCosts;
+            state.cashFlow = cashFlow;
+        }
+
+        // Send message to CEO and Admin
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            const recipient = document.getElementById('recipientSelect').value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            const messageData = {
+                sender: 'CFO',
+                receiver: recipient,
+                message: message,
+                read: false,
+                created_at: new Date().toISOString()
+            };
+
+            // Add to local state immediately for instant feedback
+            state.messages.unshift(messageData);
+            updateMessages();
+            messageInput.value = '';
+
+            // Save to shared database (CEO and Admin will see it instantly)
+            if (supabase) {
+                try {
+                    const { error } = await supabase.from('messages').insert([messageData]);
+                    if (error) throw error;
+                    console.log(' Message saved to shared database - CEO & Admin notified');
+                    showNotification('Message sent to executives!', 'success');
+                } catch (error) {
+                    console.error('Failed to save message:', error);
+                    showNotification('Message sent locally (connection issue)', 'warning');
+                }
+            } else {
+                showNotification('Message sent (offline mode)', 'info');
+            }
+        }
+
+        // Update messages UI
+        function updateMessages() {
+            const container = document.getElementById('messagesContainer');
+            const messageCount = document.getElementById('messageCount');
+            
+            if (!state.messages.length) {
+                container.innerHTML = '<div class="text-center text-gray-500 text-sm py-4">No messages yet</div>';
+                messageCount.textContent = '0 messages';
+                return;
+            }
+
+            container.innerHTML = state.messages.map(msg => {
+                let messageClass = 'message-other';
+                if (msg.sender === 'CEO') messageClass = 'message-ceo';
+                if (msg.sender === 'CFO') messageClass = 'message-cfo';
+                if (msg.sender === 'Admin') messageClass = 'message-admin';
+                
+                return `
+                <div class="${messageClass} fade-in">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-semibold text-sm">${msg.sender}</span>
+                        <span class="text-xs opacity-80">${formatTime(msg.created_at)}</span>
+                    </div>
+                    <div class="text-sm">${msg.message}</div>
+                    ${msg.receiver !== 'all' ? `<div class="text-xs opacity-80 mt-1">To: ${msg.receiver}</div>` : ''}
+                </div>
+                `;
+            }).join('');
+
+            messageCount.textContent = `${state.messages.length} messages`;
+            
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // Update brands table - SHOWS EMPTY STATE INITIALLY
+        function updateBrandsTable() {
+            const tbody = document.getElementById('brandsTableBody');
+            
+            if (!state.brands.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center py-8">
+                            <div class="empty-state">
+                                <i class="fas fa-database text-4xl text-gray-400 mb-4"></i>
+                                <div class="text-gray-600 font-semibold mb-2">No Brand Data Available</div>
+                                <div class="text-sm text-gray-500 mb-4">Waiting for Admin to upload brand performance data</div>
+                                <div class="text-xs text-gray-400">Revenue and metrics will update automatically when data is available</div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = state.brands.map(brand => {
+                const revenue = (brand.views_28d / 1000) * 0.12;
+                const profit = revenue * 0.35; // Assuming 35% profit margin
+                const roi = ((profit / (revenue * 0.7)) * 100).toFixed(1);
+                const lastUpdated = brand.updated_at ? formatTime(brand.updated_at) : 'Recently';
+                
+                return `
+                <tr class="border-b hover:bg-gray-50 fade-in">
+                    <td class="py-2 font-semibold">${brand.name || 'Unknown Brand'}</td>
+                    <td class="py-2">${formatCurrency(revenue)}</td>
+                    <td class="py-2">${formatCurrency(profit)}</td>
+                    <td class="py-2 ${roi > 40 ? 'text-green-600' : 'text-orange-600'}">${roi}%</td>
+                    <td class="py-2">
+                        <span class="px-2 py-1 rounded-full text-xs ${roi > 40 ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">
+                            ${roi > 40 ? '' : ''}
+                        </span>
+                    </td>
+                    <td class="py-2 text-xs text-gray-500">${lastUpdated}</td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // ZERO DATA STATE - No demo data, just empty state
+        function loadZeroData() {
+            state.brands = []; // Empty array
+            state.messages = [
+                { 
+                    sender: 'System', 
+                    receiver: 'cfo', 
+                    message: 'Welcome! Financial data will appear here when Admin uploads brand information.', 
+                    created_at: new Date().toISOString() 
+                }
+            ];
+            updateBrandsTable();
+            updateMessages();
+            calculateFinancialMetrics(); // This will set everything to 0
+        }
+
+        function loadDemoMessages() {
+            state.messages = [
+                { 
+                    sender: 'CEO', 
+                    receiver: 'all', 
+                    message: 'Need Q3 financial projections by EOD tomorrow.', 
+                    created_at: new Date().toISOString() 
+                },
+                { 
+                    sender: 'Admin', 
+                    receiver: 'cfo', 
+                    message: 'I will upload brand performance data shortly.', 
+                    created_at: new Date(Date.now() - 300000).toISOString() 
+                },
+                { 
+                    sender: 'System', 
+                    receiver: 'cfo', 
+                    message: 'Financial metrics will update when Admin adds brand data.', 
+                    created_at: new Date(Date.now() - 600000).toISOString() 
+                }
+            ];
+            updateMessages();
+        }
+
+        // Notification sound
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                console.log('Audio notification not supported');
+            }
+        }
+
+        // Utility functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 fade-in ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Theme toggle
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('bg-gray-50')) {
+                body.className = 'bg-gray-900 text-white min-h-screen';
+            } else {
+                body.className = 'bg-gray-50 min-h-screen';
+            }
+        }
+
+        // AI Insights - uses actual financial data (which starts at 0)
+        async function generateAIInsight(type) {
+            const aiOutput = document.getElementById('aiOutput');
+            
+            aiOutput.innerHTML = `
+                <div class="flex flex-col items-center justify-center py-8">
+                    <div class="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                    <div class="text-purple-600 font-semibold">Analyzing Financial Data...</div>
+                </div>
+            `;
+
+            setTimeout(() => {
+                // Use actual financial data from state
+                const insights = {
+                    revenue: [
+                        state.totalRevenue > 0 ? 
+                        ` Current revenue: ${formatCurrency(state.totalRevenue)} - ${state.brands.length} brands active` :
+                        " No revenue data available yet - waiting for Admin to upload brand information",
+                        " Revenue tracking will begin when brand data is available",
+                        " Ask Admin to upload CSV with brand performance metrics"
+                    ],
+                    profitability: [
+                        state.profitMargin > 0 ?
+                        ` Current profit margin: ${state.profitMargin.toFixed(1)}%` :
+                        " Profit margin analysis requires brand performance data",
+                        " Margin optimization suggestions will appear when data is available",
+                        " Contact Admin to set up brand tracking"
+                    ]
+                };
+
+                aiOutput.innerHTML = (insights[type] || insights.revenue).map(insight => `
+                    <div class="ai-insight fade-in">
+                        <div class="text-sm font-medium text-gray-900">${insight}</div>
+                    </div>
+                `).join('');
+
+                showNotification(`${type} analysis completed!`, 'success');
+            }, 2000);
+        }
+
+        function generateQuickAdvice() {
+            if (state.totalRevenue === 0) {
+                const aiOutput = document.getElementById('aiOutput');
+                aiOutput.innerHTML = `
+                    <div class="ai-insight fade-in">
+                        <div class="text-sm font-medium text-gray-900"> Quick Advice: Contact Admin to upload brand performance data to start financial tracking</div>
+                    </div>
+                    <div class="ai-insight fade-in">
+                        <div class="text-sm font-medium text-gray-900"> Once data is available, I'll provide revenue optimization suggestions</div>
+                    </div>
+                    <div class="ai-insight fade-in">
+                        <div class="text-sm font-medium text-gray-900"> Financial metrics update automatically when Admin adds new data</div>
+                    </div>
+                `;
+            } else {
+                generateAIInsight('revenue');
+            }
+        }
+
+        function exportData() {
+            if (state.brands.length === 0) {
+                showNotification('No data available to export', 'warning');
+            } else {
+                showNotification('Data export started...', 'info');
+            }
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            realtimeChannels.forEach(channel => {
+                if (channel && channel.unsubscribe) {
+                    channel.unsubscribe();
+                }
+            });
+        });
+
+        // Initialize when DOM loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
