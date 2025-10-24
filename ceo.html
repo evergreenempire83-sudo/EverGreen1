@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EverGreen — Advanced CEO Portal</title>
+    <title>EverGreen Empire — CEO Portal</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -75,13 +75,16 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .pulse-glow {
-            animation: pulseGlow 2s infinite;
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
         }
 
-        @keyframes pulseGlow {
-            0%, 100% { box-shadow: 0 0 5px rgba(59, 130, 246, 0.5); }
-            50% { box-shadow: 0 0 20px rgba(59, 130, 246, 0.8); }
+        @media (min-width: 1024px) {
+            .chart-container {
+                height: 220px;
+            }
         }
 
         /* Mobile optimizations */
@@ -90,11 +93,13 @@
             .mobile-full { width: 100%; }
             .mobile-text-center { text-align: center; }
             .mobile-p-3 { padding: 0.75rem; }
+            .mobile-text-sm { font-size: 0.875rem; }
+            .mobile-text-xs { font-size: 0.75rem; }
         }
 
         /* Custom scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+            width: 4px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-track {
@@ -103,7 +108,46 @@
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: var(--primary);
-            border-radius: 3px;
+            border-radius: 2px;
+        }
+
+        .company-glow {
+            text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        }
+
+        .message-ceo {
+            background: linear-gradient(135deg, #1e40af, #3730a3);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .message-admin {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .message-other {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .urgent-message {
+            border-left: 4px solid #dc2626;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
         }
     </style>
 </head>
@@ -112,26 +156,30 @@
     <div id="loadingScreen" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
         <div class="text-center">
             <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div class="text-xl font-semibold">Loading CEO Portal</div>
-            <div class="text-sm text-gray-600 dark:text-gray-400 mt-2">Initializing executive tools...</div>
+            <div class="text-xl font-semibold">Loading EverGreen Empire</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mt-2">Initializing CEO Portal...</div>
         </div>
     </div>
 
     <!-- Mobile Header -->
-    <header class="bg-blue-900 text-white p-4 sticky top-0 z-40 shadow-lg lg:hidden">
+    <header class="bg-blue-900 text-white p-3 sticky top-0 z-40 shadow-lg lg:hidden">
         <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                    <i class="fas fa-crown"></i>
+            <div class="flex items-center space-x-2">
+                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                    <i class="fas fa-crown text-sm"></i>
                 </div>
                 <div>
-                    <h1 class="text-lg font-bold">CEO Portal</h1>
-                    <p class="text-xs opacity-90">Executive Dashboard</p>
+                    <h1 class="text-base font-bold company-glow">EverGreen Empire</h1>
+                    <p id="greetingMobile" class="text-xs opacity-90">Welcome, CEO</p>
                 </div>
             </div>
-            <div class="flex items-center space-x-2">
-                <button id="mobileMenuBtn" class="p-2 rounded-lg glass">
-                    <i class="fas fa-bars"></i>
+            <div class="flex items-center space-x-1">
+                <button id="mobileNotifBtn" class="p-1.5 rounded-lg glass relative">
+                    <i class="fas fa-bell text-sm"></i>
+                    <span id="mobileNotifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+                </button>
+                <button id="mobileMenuBtn" class="p-1.5 rounded-lg glass">
+                    <i class="fas fa-bars text-sm"></i>
                 </button>
             </div>
         </div>
@@ -140,43 +188,43 @@
     <!-- Desktop Header -->
     <header class="bg-blue-900 text-white p-4 sticky top-0 z-40 shadow-lg hidden lg:block">
         <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <div class="w-12 h-12 rounded-lg bg-white/20 flex items-center justify-center font-bold text-xl">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
                     <i class="fas fa-crown"></i>
                 </div>
                 <div>
-                    <h1 class="text-2xl font-bold">EverGreen CEO Portal</h1>
+                    <h1 class="text-xl font-bold company-glow">EverGreen Empire</h1>
                     <p id="greeting" class="text-sm opacity-90">Welcome back, Chief Executive</p>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 <!-- Quick Stats -->
-                <div class="hidden xl:flex items-center space-x-6">
+                <div class="hidden xl:flex items-center space-x-4">
                     <div class="text-center">
                         <div class="text-xs opacity-80">Live Revenue</div>
-                        <div id="liveRevenue" class="font-bold text-green-300">$0.00</div>
+                        <div id="liveRevenue" class="font-bold text-green-300 text-sm">$0.00</div>
                     </div>
                     <div class="text-center">
                         <div class="text-xs opacity-80">Growth</div>
-                        <div id="liveGrowth" class="font-bold text-green-300">0%</div>
+                        <div id="liveGrowth" class="font-bold text-green-300 text-sm">0%</div>
                     </div>
                 </div>
 
                 <!-- Theme Selector -->
                 <div class="relative">
                     <button id="themeBtn" class="p-2 rounded-lg glass hover:bg-white/20 transition-all">
-                        <i class="fas fa-palette"></i>
+                        <i class="fas fa-palette text-sm"></i>
                     </button>
-                    <div id="themePanel" class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-3 hidden z-50">
-                        <div class="space-y-2">
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-theme="light">
-                                <i class="fas fa-sun mr-2 text-yellow-500"></i>Light Mode
+                    <div id="themePanel" class="absolute right-0 top-10 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-2 hidden z-50">
+                        <div class="space-y-1">
+                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="light">
+                                <i class="fas fa-sun mr-2 text-yellow-500"></i>Light
                             </button>
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-theme="dark">
-                                <i class="fas fa-moon mr-2 text-blue-400"></i>Dark Mode
+                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="dark">
+                                <i class="fas fa-moon mr-2 text-blue-400"></i>Dark
                             </button>
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700" data-theme="corporate">
+                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="corporate">
                                 <i class="fas fa-building mr-2 text-green-500"></i>Corporate
                             </button>
                         </div>
@@ -186,29 +234,29 @@
                 <!-- Notifications -->
                 <div class="relative">
                     <button id="notifBtn" class="p-2 rounded-lg glass hover:bg-white/20 transition-all relative">
-                        <i class="fas fa-bell"></i>
-                        <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+                        <i class="fas fa-bell text-sm"></i>
+                        <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
                     </button>
                 </div>
 
                 <!-- User Menu -->
                 <div class="relative">
                     <button id="userMenuBtn" class="flex items-center space-x-2 p-2 rounded-lg glass hover:bg-white/20 transition-all">
-                        <div class="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user-tie"></i>
+                        <div class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
+                            <i class="fas fa-user-tie text-sm"></i>
                         </div>
-                        <span class="hidden md:inline">CEO</span>
+                        <span class="text-sm">CEO</span>
                     </button>
-                    <div id="userMenu" class="absolute right-0 top-12 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-2 hidden z-50">
-                        <div class="space-y-2">
-                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
+                    <div id="userMenu" class="absolute right-0 top-10 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-2 hidden z-50">
+                        <div class="space-y-1">
+                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
                                 <i class="fas fa-cog mr-2"></i>Settings
                             </button>
-                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700">
-                                <i class="fas fa-users mr-2"></i>Team Management
+                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                                <i class="fas fa-users mr-2"></i>Team
                             </button>
-                            <hr class="border-gray-200 dark:border-gray-600">
-                            <button id="logoutBtn" class="w-full text-left p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400">
+                            <hr class="border-gray-200 dark:border-gray-600 my-1">
+                            <button id="logoutBtn" class="w-full text-left p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
                                 <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
                             </button>
                         </div>
@@ -220,28 +268,26 @@
 
     <!-- Mobile Menu -->
     <div id="mobileMenu" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden">
-        <div class="absolute right-0 top-0 h-full w-80 bg-white dark:bg-gray-800 shadow-xl">
-            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+        <div class="absolute right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl">
+            <div class="p-3 border-b border-gray-200 dark:border-gray-700">
                 <div class="flex items-center justify-between">
-                    <h2 class="text-lg font-bold">Menu</h2>
-                    <button id="closeMobileMenu" class="p-2">
+                    <h2 class="text-base font-bold company-glow">EverGreen Empire</h2>
+                    <button id="closeMobileMenu" class="p-1">
                         <i class="fas fa-times"></i>
                     </button>
                 </div>
+                <p id="greetingMobileMenu" class="text-xs text-gray-600 dark:text-gray-400 mt-1">Welcome, CEO</p>
             </div>
-            <div class="p-4 space-y-4">
-                <div class="space-y-2">
-                    <button class="w-full text-left p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400">
-                        <i class="fas fa-home mr-3"></i>Dashboard
+            <div class="p-3 space-y-2">
+                <div class="space-y-1">
+                    <button class="w-full text-left p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm">
+                        <i class="fas fa-home mr-2"></i>Dashboard
                     </button>
-                    <button class="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <i class="fas fa-chart-line mr-3"></i>Analytics
+                    <button class="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                        <i class="fas fa-chart-line mr-2"></i>Analytics
                     </button>
-                    <button class="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <i class="fas fa-users mr-3"></i>Team
-                    </button>
-                    <button class="w-full text-left p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <i class="fas fa-cog mr-3"></i>Settings
+                    <button class="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
+                        <i class="fas fa-users mr-2"></i>Team
                     </button>
                 </div>
             </div>
@@ -249,83 +295,123 @@
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto p-4 lg:p-6 grid grid-cols-1 xl:grid-cols-4 gap-4 lg:gap-6">
+    <main class="max-w-7xl mx-auto p-3 lg:p-4 grid grid-cols-1 xl:grid-cols-4 gap-3 lg:gap-4">
         <!-- Left Sidebar - Quick Actions -->
-        <div class="xl:col-span-1 space-y-4 lg:space-y-6">
+        <div class="xl:col-span-1 space-y-3 lg:space-y-4">
             <!-- Quick Actions -->
-            <div class="card rounded-xl p-4 lg:p-6">
-                <h3 class="text-lg font-bold mb-4 flex items-center mobile-text-center">
-                    <i class="fas fa-bolt mr-2 text-yellow-500"></i>Quick Actions
+            <div class="card rounded-lg p-3 lg:p-4">
+                <h3 class="text-base font-bold mb-3 flex items-center">
+                    <i class="fas fa-bolt mr-2 text-yellow-500 text-sm"></i>Quick Actions
                 </h3>
-                <div class="space-y-3">
-                    <button id="runProjectionsBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-lg flex items-center justify-between transition-all mobile-stack mobile-full">
+                <div class="space-y-2">
+                    <button id="runProjectionsBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
                         <span>Run Projections</span>
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-chart-line text-xs"></i>
                     </button>
-                    <button id="sendBroadcastBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-3 rounded-lg flex items-center justify-between transition-all mobile-stack mobile-full">
+                    <button id="sendBroadcastBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
                         <span>Send Broadcast</span>
-                        <i class="fas fa-bullhorn"></i>
+                        <i class="fas fa-bullhorn text-xs"></i>
                     </button>
-                    <button id="aiAnalysisBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white p-3 rounded-lg flex items-center justify-between transition-all mobile-stack mobile-full">
+                    <button id="adminCommBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
+                        <span>Message Admin</span>
+                        <i class="fas fa-comment-alt text-xs"></i>
+                    </button>
+                    <button id="aiAnalysisBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
                         <span>AI Analysis</span>
-                        <i class="fas fa-robot"></i>
+                        <i class="fas fa-robot text-xs"></i>
                     </button>
-                    <button id="emergencyMeetingBtn" class="w-full bg-red-600 hover:bg-red-700 text-white p-3 rounded-lg flex items-center justify-between transition-all mobile-stack mobile-full">
+                    <button id="emergencyMeetingBtn" class="w-full bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
                         <span>Emergency Meeting</span>
-                        <i class="fas fa-exclamation-triangle"></i>
+                        <i class="fas fa-exclamation-triangle text-xs"></i>
                     </button>
                 </div>
             </div>
 
             <!-- Team Status -->
-            <div class="card rounded-xl p-4 lg:p-6">
-                <h3 class="text-lg font-bold mb-4 flex items-center mobile-text-center">
-                    <i class="fas fa-users mr-2 text-blue-500"></i>Team Status
+            <div class="card rounded-lg p-3 lg:p-4">
+                <h3 class="text-base font-bold mb-3 flex items-center">
+                    <i class="fas fa-users mr-2 text-blue-500 text-sm"></i>Team Status
                 </h3>
-                <div class="space-y-3">
-                    <div class="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white mr-3">
-                                <i class="fas fa-user"></i>
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mr-2">
+                                <i class="fas fa-user text-xs"></i>
                             </div>
-                            <span class="text-sm lg:text-base">CFO</span>
+                            <span class="text-sm">CFO</span>
                         </div>
-                        <span class="text-green-600 font-semibold text-sm">Online</span>
+                        <span class="text-green-600 font-semibold text-xs">Online</span>
                     </div>
-                    <div class="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div class="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white mr-3">
-                                <i class="fas fa-user"></i>
+                            <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white mr-2">
+                                <i class="fas fa-user text-xs"></i>
                             </div>
-                            <span class="text-sm lg:text-base">COO</span>
+                            <span class="text-sm">COO</span>
                         </div>
-                        <span class="text-blue-600 font-semibold text-sm">Online</span>
+                        <span class="text-blue-600 font-semibold text-xs">Online</span>
                     </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                    <div class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
                         <div class="flex items-center">
-                            <div class="w-8 h-8 bg-gray-500 rounded-full flex items-center justify-center text-white mr-3">
-                                <i class="fas fa-user"></i>
+                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mr-2">
+                                <i class="fas fa-user text-xs"></i>
                             </div>
-                            <span class="text-sm lg:text-base">CTO</span>
+                            <span class="text-sm">Admin</span>
                         </div>
-                        <span class="text-gray-500 text-sm">Offline</span>
+                        <span class="text-green-600 font-semibold text-xs">Online</span>
                     </div>
+                    <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                        <div class="flex items-center">
+                            <div class="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white mr-2">
+                                <i class="fas fa-user text-xs"></i>
+                            </div>
+                            <span class="text-sm">CTO</span>
+                        </div>
+                        <span class="text-gray-500 text-xs">Offline</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Company Vision -->
+            <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-green-500 to-green-600 text-white">
+                <h3 class="text-base font-bold mb-2 flex items-center">
+                    <i class="fas fa-seedling mr-2 text-sm"></i>EverGreen Empire
+                </h3>
+                <p class="text-xs opacity-90 mb-2">Building a sustainable future through innovation and excellence.</p>
+                <div class="flex items-center justify-between text-xs">
+                    <span>Founded: 2025</span>
+                    <span>Global Reach</span>
                 </div>
             </div>
         </div>
 
         <!-- Main Dashboard -->
-        <div class="xl:col-span-3 space-y-4 lg:space-y-6">
-            <!-- Revenue & KPI Section -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                <!-- Total Revenue -->
-                <div class="card rounded-xl p-4 lg:p-6 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Total Revenue</h3>
-                        <i class="fas fa-dollar-sign text-2xl opacity-80"></i>
+        <div class="xl:col-span-3 space-y-3 lg:space-y-4">
+            <!-- Welcome Banner -->
+            <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 id="welcomeTitle" class="text-lg lg:text-xl font-bold mb-1">Welcome to Your Dashboard</h2>
+                        <p id="welcomeMessage" class="text-sm opacity-90">Ready to lead another successful day at EverGreen Empire</p>
                     </div>
-                    <div class="text-2xl lg:text-3xl font-bold mb-2" id="totalRevenue">$0.00</div>
-                    <div class="flex items-center text-sm">
+                    <div class="hidden lg:block">
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                            <i class="fas fa-chart-line text-lg"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Revenue & KPI Section -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
+                <!-- Total Revenue -->
+                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold">Total Revenue</h3>
+                        <i class="fas fa-dollar-sign text-lg opacity-80"></i>
+                    </div>
+                    <div class="text-xl lg:text-2xl font-bold mb-1" id="totalRevenue">$0.00</div>
+                    <div class="flex items-center text-xs">
                         <i class="fas fa-arrow-up mr-1"></i>
                         <span id="revenueGrowth">0%</span>
                         <span class="ml-2 opacity-80">this month</span>
@@ -333,67 +419,71 @@
                 </div>
 
                 <!-- Active Projects -->
-                <div class="card rounded-xl p-4 lg:p-6 bg-gradient-to-br from-green-500 to-green-600 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Active Projects</h3>
-                        <i class="fas fa-tasks text-2xl opacity-80"></i>
+                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-green-500 to-green-600 text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold">Active Projects</h3>
+                        <i class="fas fa-tasks text-lg opacity-80"></i>
                     </div>
-                    <div class="text-2xl lg:text-3xl font-bold mb-2" id="activeProjects">0</div>
-                    <div class="text-sm opacity-80">Across all departments</div>
+                    <div class="text-xl lg:text-2xl font-bold mb-1" id="activeProjects">0</div>
+                    <div class="text-xs opacity-80">Across all departments</div>
                 </div>
 
                 <!-- Market Share -->
-                <div class="card rounded-xl p-4 lg:p-6 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Market Share</h3>
-                        <i class="fas fa-chart-pie text-2xl opacity-80"></i>
+                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-base font-bold">Market Share</h3>
+                        <i class="fas fa-chart-pie text-lg opacity-80"></i>
                     </div>
-                    <div class="text-2xl lg:text-3xl font-bold mb-2" id="marketShare">0%</div>
-                    <div class="text-sm opacity-80">Industry position</div>
+                    <div class="text-xl lg:text-2xl font-bold mb-1" id="marketShare">0%</div>
+                    <div class="text-xs opacity-80">Industry position</div>
                 </div>
             </div>
 
             <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
                 <!-- Revenue Chart -->
-                <div class="card rounded-xl p-4 lg:p-6">
-                    <div class="flex items-center justify-between mb-4 lg:mb-6 mobile-stack">
-                        <h3 class="text-lg font-bold">Revenue Trend</h3>
-                        <div class="flex space-x-2 mt-2 lg:mt-0">
-                            <button class="px-3 py-1 text-sm bg-blue-100 dark:bg-blue-900 rounded">28D</button>
-                            <button class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded">90D</button>
-                            <button class="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded">1Y</button>
+                <div class="card rounded-lg p-3 lg:p-4">
+                    <div class="flex items-center justify-between mb-3 mobile-stack">
+                        <h3 class="text-base font-bold">Revenue Trend</h3>
+                        <div class="flex space-x-1 mt-1 lg:mt-0">
+                            <button class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 rounded">28D</button>
+                            <button class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">90D</button>
+                            <button class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">1Y</button>
                         </div>
                     </div>
-                    <canvas id="revenueChart" height="200"></canvas>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
                 </div>
 
                 <!-- Performance Metrics -->
-                <div class="card rounded-xl p-4 lg:p-6">
-                    <h3 class="text-lg font-bold mb-4 lg:mb-6">Performance Metrics</h3>
-                    <canvas id="performanceChart" height="200"></canvas>
+                <div class="card rounded-lg p-3 lg:p-4">
+                    <h3 class="text-base font-bold mb-3">Performance Metrics</h3>
+                    <div class="chart-container">
+                        <canvas id="performanceChart"></canvas>
+                    </div>
                 </div>
             </div>
 
             <!-- Data Tables -->
-            <div class="grid grid-cols-1 gap-4 lg:gap-6">
+            <div class="grid grid-cols-1 gap-3 lg:gap-4">
                 <!-- Brands Table -->
-                <div class="card rounded-xl p-4 lg:p-6">
-                    <div class="flex items-center justify-between mb-4 lg:mb-6 mobile-stack">
-                        <h3 class="text-lg font-bold">Brand Performance</h3>
-                        <button id="refreshDataBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm lg:text-base mt-2 lg:mt-0">
-                            <i class="fas fa-sync-alt mr-2"></i>Refresh Data
+                <div class="card rounded-lg p-3 lg:p-4">
+                    <div class="flex items-center justify-between mb-3 mobile-stack">
+                        <h3 class="text-base font-bold">Brand Performance</h3>
+                        <button id="refreshDataBtn" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-xs lg:text-sm mt-1 lg:mt-0">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh Data
                         </button>
                     </div>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full min-w-[500px]">
                             <thead>
                                 <tr class="border-b border-gray-200 dark:border-gray-700">
-                                    <th class="text-left py-3 font-semibold text-sm lg:text-base">Brand</th>
-                                    <th class="text-left py-3 font-semibold text-sm lg:text-base">48H Views</th>
-                                    <th class="text-left py-3 font-semibold text-sm lg:text-base">7D Views</th>
-                                    <th class="text-left py-3 font-semibold text-sm lg:text-base">28D Views</th>
-                                    <th class="text-left py-3 font-semibold text-sm lg:text-base">Trend</th>
+                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">Brand</th>
+                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">48H Views</th>
+                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">7D Views</th>
+                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">28D Views</th>
+                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">Trend</th>
                                 </tr>
                             </thead>
                             <tbody id="brandsTableBody">
@@ -404,23 +494,23 @@
                 </div>
 
                 <!-- Executive Communications -->
-                <div class="card rounded-xl p-4 lg:p-6">
-                    <h3 class="text-lg font-bold mb-4 lg:mb-6">Executive Communications</h3>
-                    <div class="space-y-4">
+                <div class="card rounded-lg p-3 lg:p-4">
+                    <h3 class="text-base font-bold mb-3">Executive Communications</h3>
+                    <div class="space-y-3">
                         <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm lg:text-base">
-                            <select id="recipientSelect" class="p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm lg:text-base">
+                            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm">
+                            <select id="recipientSelect" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm">
                                 <option value="all">All Executives</option>
+                                <option value="admin">Admin Team</option>
                                 <option value="cfo">CFO</option>
                                 <option value="coo">COO</option>
                                 <option value="cto">CTO</option>
-                                <option value="admin">Admin</option>
                             </select>
-                            <button id="sendMessageBtn" class="px-4 lg:px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm lg:text-base">
-                                <i class="fas fa-paper-plane mr-2"></i>Send
+                            <button id="sendMessageBtn" class="px-3 lg:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm">
+                                <i class="fas fa-paper-plane mr-1"></i>Send
                             </button>
                         </div>
-                        <div id="messagesContainer" class="max-h-60 overflow-y-auto space-y-3 custom-scrollbar">
+                        <div id="messagesContainer" class="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
                             <!-- Messages will appear here -->
                         </div>
                     </div>
@@ -430,28 +520,28 @@
     </main>
 
     <!-- Notifications Panel -->
-    <div id="notificationsPanel" class="fixed right-4 left-4 lg:right-6 lg:left-auto top-20 w-auto lg:w-80 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 hidden z-50">
-        <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+    <div id="notificationsPanel" class="fixed right-3 left-3 lg:right-6 lg:left-auto top-16 w-auto lg:w-72 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden z-50">
+        <div class="p-3 border-b border-gray-200 dark:border-gray-700">
             <div class="flex items-center justify-between">
-                <h3 class="font-bold">Notifications</h3>
-                <button id="clearNotifications" class="text-sm text-blue-600 hover:text-blue-700">Clear All</button>
+                <h3 class="font-bold text-sm">Notifications</h3>
+                <button id="clearNotifications" class="text-xs text-blue-600 hover:text-blue-700">Clear All</button>
             </div>
         </div>
-        <div id="notificationsList" class="max-h-96 overflow-y-auto p-2 custom-scrollbar">
+        <div id="notificationsList" class="max-h-64 overflow-y-auto p-2 custom-scrollbar">
             <!-- Notifications will appear here -->
         </div>
     </div>
 
     <!-- Quick Actions Modal -->
     <div id="quickActionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 m-4 max-w-md w-full">
-            <h3 class="text-xl font-bold mb-4" id="modalTitle">Quick Action</h3>
-            <div id="modalContent">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 m-3 max-w-sm w-full">
+            <h3 class="text-lg font-bold mb-3" id="modalTitle">Quick Action</h3>
+            <div id="modalContent" class="text-sm">
                 <!-- Content will be dynamically inserted -->
             </div>
-            <div class="flex space-x-3 mt-6">
-                <button id="confirmAction" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all">Confirm</button>
-                <button id="cancelAction" class="flex-1 bg-gray-300 dark:bg-gray-600 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-all">Cancel</button>
+            <div class="flex space-x-2 mt-4">
+                <button id="confirmAction" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all text-sm">Confirm</button>
+                <button id="cancelAction" class="flex-1 bg-gray-300 dark:bg-gray-600 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-all text-sm">Cancel</button>
             </div>
         </div>
     </div>
@@ -470,13 +560,18 @@
             videos: [],
             messages: [],
             revenueData: [],
-            user: { role: 'ceo', name: 'Chief Executive Officer' }
+            user: { role: 'ceo', name: 'Chief Executive Officer' },
+            companyName: 'EverGreen Empire'
         };
 
         // DOM Elements
         const elements = {
             loadingScreen: document.getElementById('loadingScreen'),
             greeting: document.getElementById('greeting'),
+            greetingMobile: document.getElementById('greetingMobile'),
+            greetingMobileMenu: document.getElementById('greetingMobileMenu'),
+            welcomeTitle: document.getElementById('welcomeTitle'),
+            welcomeMessage: document.getElementById('welcomeMessage'),
             totalRevenue: document.getElementById('totalRevenue'),
             revenueGrowth: document.getElementById('revenueGrowth'),
             activeProjects: document.getElementById('activeProjects'),
@@ -487,6 +582,7 @@
             recipientSelect: document.getElementById('recipientSelect'),
             sendMessageBtn: document.getElementById('sendMessageBtn'),
             notifBadge: document.getElementById('notifBadge'),
+            mobileNotifBadge: document.getElementById('mobileNotifBadge'),
             notificationsPanel: document.getElementById('notificationsPanel'),
             notificationsList: document.getElementById('notificationsList'),
             clearNotifications: document.getElementById('clearNotifications'),
@@ -498,6 +594,7 @@
             mobileMenuBtn: document.getElementById('mobileMenuBtn'),
             mobileMenu: document.getElementById('mobileMenu'),
             closeMobileMenu: document.getElementById('closeMobileMenu'),
+            mobileNotifBtn: document.getElementById('mobileNotifBtn'),
             quickActionsModal: document.getElementById('quickActionsModal'),
             modalTitle: document.getElementById('modalTitle'),
             modalContent: document.getElementById('modalContent'),
@@ -505,6 +602,7 @@
             cancelAction: document.getElementById('cancelAction'),
             runProjectionsBtn: document.getElementById('runProjectionsBtn'),
             sendBroadcastBtn: document.getElementById('sendBroadcastBtn'),
+            adminCommBtn: document.getElementById('adminCommBtn'),
             aiAnalysisBtn: document.getElementById('aiAnalysisBtn'),
             emergencyMeetingBtn: document.getElementById('emergencyMeetingBtn'),
             refreshDataBtn: document.getElementById('refreshDataBtn')
@@ -513,12 +611,18 @@
         // Chart Instances
         let revenueChart, performanceChart;
 
+        // Quick Action Handler
+        let currentQuickAction = null;
+
         // Initialize Application
         async function init() {
-            console.log('🚀 Initializing Advanced CEO Portal...');
+            console.log('🚀 Initializing EverGreen Empire CEO Portal...');
             
             // Set up event listeners
             setupEventListeners();
+            
+            // Set greetings and company name
+            setGreetings();
             
             // Load initial data
             await loadInitialData();
@@ -532,11 +636,8 @@
             // Hide loading screen
             setTimeout(() => {
                 elements.loadingScreen.style.display = 'none';
-                showNotification('CEO Portal loaded successfully!', 'success');
-            }, 1000);
-
-            // Set greeting
-            setGreeting();
+                showNotification('Welcome to your EverGreen Empire dashboard!', 'success');
+            }, 1500);
         }
 
         function setupEventListeners() {
@@ -575,18 +676,28 @@
                 elements.notificationsPanel.classList.toggle('hidden');
             });
 
+            elements.mobileNotifBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                elements.notificationsPanel.classList.toggle('hidden');
+            });
+
             // Clear notifications
             elements.clearNotifications.addEventListener('click', clearAllNotifications);
 
             // Send message
-            elements.sendMessageBtn.addEventListener('click', sendMessage);
+            elements.sendMessageBtn.addEventListener('click', sendEnhancedMessage);
             elements.messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendMessage();
+                if (e.key === 'Enter') sendEnhancedMessage();
             });
 
             // Quick Actions
             elements.runProjectionsBtn.addEventListener('click', () => showQuickActionModal('Run Projections', 'Generate revenue projections for next quarter?', runProjections));
             elements.sendBroadcastBtn.addEventListener('click', () => showQuickActionModal('Send Broadcast', 'Send message to all executives?', sendBroadcast));
+            elements.adminCommBtn.addEventListener('click', () => {
+                elements.recipientSelect.value = 'admin';
+                elements.messageInput.focus();
+                showNotification('Ready to message Admin team', 'info');
+            });
             elements.aiAnalysisBtn.addEventListener('click', () => showQuickActionModal('AI Analysis', 'Run AI analysis on current performance?', runAIAnalysis));
             elements.emergencyMeetingBtn.addEventListener('click', () => showQuickActionModal('Emergency Meeting', 'Schedule emergency meeting with executives?', scheduleEmergencyMeeting));
             elements.refreshDataBtn.addEventListener('click', loadInitialData);
@@ -615,9 +726,34 @@
             });
         }
 
-        // Quick Actions Implementation
-        let currentQuickAction = null;
+        function setGreetings() {
+            const hour = new Date().getHours();
+            let greeting = 'Good evening';
+            let welcomeMessage = 'Ready to lead another successful day';
+            
+            if (hour < 12) {
+                greeting = 'Good morning';
+                welcomeMessage = 'Ready to conquer the day ahead';
+            } else if (hour < 18) {
+                greeting = 'Good afternoon';
+                welcomeMessage = 'Making strategic moves this afternoon';
+            }
 
+            // Update all greeting elements
+            const fullGreeting = `${greeting}, Chief Executive`;
+            elements.greeting.textContent = fullGreeting;
+            elements.greetingMobile.textContent = `${greeting}, CEO`;
+            elements.greetingMobileMenu.textContent = `${greeting}, CEO`;
+            
+            // Update welcome banner
+            elements.welcomeTitle.textContent = `${greeting}, CEO`;
+            elements.welcomeMessage.textContent = `${welcomeMessage} at ${state.companyName}`;
+
+            // Update document title
+            document.title = `${state.companyName} — CEO Portal`;
+        }
+
+        // Quick Actions Implementation
         function showQuickActionModal(title, content, action) {
             elements.modalTitle.textContent = title;
             elements.modalContent.textContent = content;
@@ -634,7 +770,6 @@
 
         function runProjections() {
             showNotification('Revenue projections generated successfully!', 'success');
-            // Simulate projection data
             const projectedRevenue = (calculateRevenue() * 1.15).toFixed(2);
             showNotification(`Next quarter projection: $${projectedRevenue}`, 'info');
         }
@@ -667,10 +802,9 @@
         }
 
         function sendMessageToAll(message) {
-            // This would send to all executives in a real implementation
             const messageData = {
                 sender: 'CEO',
-                recipient: 'all',
+                receiver: 'all',
                 message: message,
                 created_at: new Date().toISOString()
             };
@@ -679,18 +813,55 @@
             updateMessages();
         }
 
+        // Enhanced Messaging System
+        async function sendEnhancedMessage() {
+            const message = elements.messageInput.value.trim();
+            const recipient = elements.recipientSelect.value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            try {
+                const messageData = {
+                    sender: 'CEO',
+                    receiver: recipient,
+                    message: message,
+                    read: false,
+                    priority: 'high',
+                    created_at: new Date().toISOString()
+                };
+
+                const { error } = await supabase
+                    .from('messages')
+                    .insert([messageData]);
+
+                if (error) throw error;
+
+                // Add to local state
+                state.messages.unshift(messageData);
+                updateMessages();
+
+                // Clear input
+                elements.messageInput.value = '';
+
+                showNotification('Message sent successfully!', 'success');
+
+                // Special notification for admin messages
+                if (recipient === 'admin' || recipient === 'all') {
+                    showNotification('Admin has been notified of your message', 'info');
+                }
+
+            } catch (error) {
+                console.error('Error sending message:', error);
+                showNotification('Error sending message: ' + error.message, 'error');
+            }
+        }
+
         function setTheme(theme) {
             document.body.className = `theme-${theme} min-h-screen font-sans`;
             localStorage.setItem('ceo-portal-theme', theme);
-        }
-
-        function setGreeting() {
-            const hour = new Date().getHours();
-            let greeting = 'Good evening';
-            if (hour < 12) greeting = 'Good morning';
-            else if (hour < 18) greeting = 'Good afternoon';
-            
-            elements.greeting.textContent = `${greeting}, ${state.user.name}`;
         }
 
         async function loadInitialData() {
@@ -730,13 +901,13 @@
                 updateBrandsTable();
                 updateMessages();
                 calculateRevenue();
+                updateNotificationBadge();
 
                 showNotification('Data refreshed successfully!', 'success');
 
             } catch (error) {
                 console.error('Error loading data:', error);
                 showNotification('Error loading data. Using demo data.', 'error');
-                // Load demo data
                 loadDemoData();
             }
         }
@@ -752,30 +923,31 @@
 
             // Demo messages
             state.messages = [
-                { sender: 'CFO', message: 'Q3 financial projections are ready for review.', created_at: new Date().toISOString() },
-                { sender: 'COO', message: 'Operational efficiency improved by 15% this month.', created_at: new Date(Date.now() - 300000).toISOString() },
-                { sender: 'Admin', message: 'System update completed successfully.', created_at: new Date(Date.now() - 600000).toISOString() }
+                { sender: 'CFO', receiver: 'CEO', message: 'Q3 financial projections are ready for review.', created_at: new Date().toISOString() },
+                { sender: 'COO', receiver: 'CEO', message: 'Operational efficiency improved by 15% this month.', created_at: new Date(Date.now() - 300000).toISOString() },
+                { sender: 'Admin', receiver: 'CEO', message: 'System update completed successfully.', created_at: new Date(Date.now() - 600000).toISOString() }
             ];
 
             updateBrandsTable();
             updateMessages();
             calculateRevenue();
+            updateNotificationBadge();
         }
 
         function updateBrandsTable() {
             if (!state.brands.length) {
-                elements.brandsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-gray-500">No brand data available</td></tr>';
+                elements.brandsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-gray-500 text-sm">No brand data available</td></tr>';
                 return;
             }
 
             elements.brandsTableBody.innerHTML = state.brands.map(brand => `
                 <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <td class="py-3 font-semibold text-sm lg:text-base">${brand.name}</td>
-                    <td class="py-3 text-sm lg:text-base">${formatNumber(brand.views_48h || 0)}</td>
-                    <td class="py-3 text-sm lg:text-base">${formatNumber(brand.views_7d || 0)}</td>
-                    <td class="py-3 text-sm lg:text-base">${formatNumber(brand.views_28d || 0)}</td>
-                    <td class="py-3">
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold ${(brand.views_7d / 3.5) > brand.views_48h ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    <td class="py-2 font-semibold text-xs lg:text-sm">${brand.name}</td>
+                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_48h || 0)}</td>
+                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_7d || 0)}</td>
+                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_28d || 0)}</td>
+                    <td class="py-2">
+                        <span class="px-1.5 py-0.5 rounded-full text-xs font-semibold ${(brand.views_7d / 3.5) > brand.views_48h ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
                             ${(brand.views_7d / 3.5) > brand.views_48h ? '📈' : '📉'}
                         </span>
                     </td>
@@ -784,75 +956,37 @@
         }
 
         function updateMessages() {
-            elements.messagesContainer.innerHTML = state.messages.map(msg => `
-                <div class="p-3 rounded-lg bg-gray-50 dark:bg-gray-700 fade-in">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="font-semibold text-blue-600 dark:text-blue-400 text-sm lg:text-base">${msg.sender}</span>
-                        <span class="text-xs text-gray-500">${formatTime(msg.created_at)}</span>
+            elements.messagesContainer.innerHTML = state.messages.map(msg => {
+                let messageClass = 'message-other';
+                if (msg.sender === 'CEO') messageClass = 'message-ceo';
+                if (msg.sender === 'Admin') messageClass = 'message-admin';
+                
+                const isUrgent = msg.message.includes('🚨') || msg.message.includes('URGENT') || msg.message.includes('EMERGENCY');
+                
+                return `
+                    <div class="${messageClass} ${isUrgent ? 'urgent-message' : ''} fade-in">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-semibold text-xs lg:text-sm">${msg.sender}</span>
+                            <span class="text-xs opacity-80">${formatTime(msg.created_at)}</span>
+                        </div>
+                        <div class="text-xs lg:text-sm">${msg.message}</div>
+                        ${msg.receiver !== 'all' ? `<div class="text-xs opacity-80 mt-1">To: ${msg.receiver}</div>` : ''}
                     </div>
-                    <div class="text-sm lg:text-base">${msg.message}</div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
             
             // Scroll to bottom
             elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
         }
 
-        async function sendMessage() {
-            const message = elements.messageInput.value.trim();
-            const recipient = elements.recipientSelect.value;
-
-            if (!message) {
-                showNotification('Please enter a message', 'error');
-                return;
-            }
-
-            try {
-                const messageData = {
-                    sender: 'CEO',
-                    recipient: recipient,
-                    message: message,
-                    created_at: new Date().toISOString()
-                };
-
-                const { error } = await supabase
-                    .from('messages')
-                    .insert([messageData]);
-
-                if (error) throw error;
-
-                // Add to local state
-                state.messages.unshift(messageData);
-                updateMessages();
-
-                // Clear input
-                elements.messageInput.value = '';
-
-                showNotification('Message sent successfully!', 'success');
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showNotification('Error sending message', 'error');
-            }
-        }
-
         function calculateRevenue() {
-            // Calculate total views across all brands for 28 days
             const total28DayViews = state.brands.reduce((sum, brand) => sum + (brand.views_28d || 0), 0);
-            
-            // Calculate revenue (using $0.12 RPM)
             const revenue = (total28DayViews / 1000) * 0.12;
             
-            // Update UI
             elements.totalRevenue.textContent = formatCurrency(revenue);
-            
-            // Calculate growth (demo calculation)
-            const growth = 12.5; // This would come from comparing with previous period
-            elements.revenueGrowth.textContent = `${growth}%`;
-
-            // Update other metrics
-            elements.activeProjects.textContent = state.brands.length + 3; // Brands + other projects
-            elements.marketShare.textContent = '15%'; // This would come from market data
+            elements.revenueGrowth.textContent = `12.5%`;
+            elements.activeProjects.textContent = state.brands.length + 3;
+            elements.marketShare.textContent = '15%';
 
             return revenue;
         }
@@ -869,7 +1003,7 @@
                         data: [12500, 13200, 14100, 15800],
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 3,
+                        borderWidth: 2,
                         fill: true,
                         tension: 0.4
                     }]
@@ -887,11 +1021,21 @@
                             beginAtZero: true,
                             grid: {
                                 color: 'rgba(0, 0, 0, 0.1)'
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
                             }
                         },
                         x: {
                             grid: {
                                 display: false
+                            },
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
                             }
                         }
                     }
@@ -932,7 +1076,19 @@
                     },
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 10
+                                }
+                            }
                         }
                     }
                 }
@@ -940,79 +1096,132 @@
         }
 
         function setupRealtimeSubscriptions() {
-            // Subscribe to brands changes
-            supabase
-                .channel('brands-changes')
-                .on('postgres_changes', 
-                    { event: '*', schema: 'public', table: 'brands' }, 
-                    (payload) => {
-                        console.log('Brands updated:', payload);
-                        showNotification('Brand data updated', 'info');
-                        loadInitialData(); // Reload data
-                    }
-                )
-                .subscribe();
-
-            // Subscribe to messages
-            supabase
-                .channel('messages-changes')
-                .on('postgres_changes', 
-                    { event: 'INSERT', schema: 'public', table: 'messages' }, 
-                    (payload) => {
-                        console.log('New message:', payload);
-                        if (payload.new.sender !== 'CEO') {
-                            showNotification(`New message from ${payload.new.sender}`, 'info');
+            try {
+                // Subscribe to brands changes
+                supabase
+                    .channel('ceo-brands')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'brands' }, 
+                        (payload) => {
+                            console.log('Brands updated by admin:', payload);
+                            showNotification('Brand data updated from admin', 'info');
+                            loadInitialData();
                         }
-                        state.messages.unshift(payload.new);
-                        updateMessages();
-                    }
-                )
-                .subscribe();
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('✅ Brands real-time subscription active');
+                        }
+                    });
+
+                // Enhanced Messages Subscription
+                supabase
+                    .channel('ceo-enhanced-messages')
+                    .on('postgres_changes', 
+                        { event: 'INSERT', schema: 'public', table: 'messages' }, 
+                        (payload) => {
+                            console.log('New message received:', payload);
+                            
+                            // Add to local state
+                            state.messages.unshift(payload.new);
+                            updateMessages();
+                            
+                            // Show notification for new messages (except CEO's own)
+                            if (payload.new.sender !== 'CEO') {
+                                let notificationMessage = `New message from ${payload.new.sender}`;
+                                
+                                // Special handling for admin messages
+                                if (payload.new.sender === 'Admin') {
+                                    notificationMessage = `📨 Admin: ${payload.new.message.substring(0, 50)}${payload.new.message.length > 50 ? '...' : ''}`;
+                                }
+                                
+                                showNotification(notificationMessage, 'info');
+                            }
+                            
+                            updateNotificationBadge();
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('✅ Enhanced messages real-time subscription active');
+                        }
+                    });
+
+                // Subscribe to videos
+                supabase
+                    .channel('ceo-videos')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'videos' }, 
+                        (payload) => {
+                            console.log('Videos updated:', payload);
+                            showNotification('Video data updated', 'info');
+                            loadInitialData();
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            console.log('✅ Videos real-time subscription active');
+                        }
+                    });
+
+            } catch (error) {
+                console.error('Real-time subscription error:', error);
+            }
         }
 
         function showNotification(message, type = 'info') {
             const notification = document.createElement('div');
-            notification.className = `p-3 rounded-lg mb-2 fade-in ${
+            notification.className = `p-2 rounded-lg mb-1 fade-in ${
                 type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
                 type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
                 'bg-blue-100 text-blue-800 border border-blue-200'
             }`;
             notification.innerHTML = `
                 <div class="flex items-center justify-between">
-                    <span class="text-sm">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-500 hover:text-gray-700 ml-2">
-                        <i class="fas fa-times"></i>
+                    <span class="text-xs">${message}</span>
+                    <button onclick="this.parentElement.parentElement.remove(); updateNotificationBadge();" class="text-gray-500 hover:text-gray-700 ml-1">
+                        <i class="fas fa-times text-xs"></i>
                     </button>
                 </div>
             `;
 
             elements.notificationsList.appendChild(notification);
+            updateNotificationBadge();
 
-            // Update badge
-            const currentCount = parseInt(elements.notifBadge.textContent) || 0;
-            elements.notifBadge.textContent = currentCount + 1;
-            elements.notifBadge.classList.remove('hidden');
-
-            // Auto remove after 5 seconds
+            // Auto-remove after 5 seconds
             setTimeout(() => {
                 if (notification.parentElement) {
                     notification.remove();
+                    updateNotificationBadge();
                 }
             }, 5000);
         }
 
+        function updateNotificationBadge() {
+            const notificationCount = elements.notificationsList.children.length;
+            
+            if (notificationCount > 0) {
+                elements.notifBadge.textContent = notificationCount;
+                elements.notifBadge.classList.remove('hidden');
+                elements.mobileNotifBadge.textContent = notificationCount;
+                elements.mobileNotifBadge.classList.remove('hidden');
+            } else {
+                elements.notifBadge.classList.add('hidden');
+                elements.mobileNotifBadge.classList.add('hidden');
+            }
+        }
+
         function clearAllNotifications() {
             elements.notificationsList.innerHTML = '';
-            elements.notifBadge.classList.add('hidden');
+            updateNotificationBadge();
         }
 
         function logout() {
             if (confirm('Are you sure you want to sign out?')) {
-                // In a real app, you would call supabase.auth.signOut()
                 localStorage.removeItem('ceo-portal-theme');
                 showNotification('Signed out successfully', 'success');
                 setTimeout(() => {
-                    window.location.href = '/login'; // Redirect to login page
+                    window.location.href = '/login';
                 }, 1000);
             }
         }
@@ -1044,4 +1253,4 @@
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-  </html>
+                                    </html>
