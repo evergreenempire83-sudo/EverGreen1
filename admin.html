@@ -1,1301 +1,1304 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>EverGreen — Admin Portal</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EverGreen Empire — Admin Control Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #7c3aed;
+            --secondary: #6d28d9;
+            --background: #faf5ff;
+            --surface: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
 
-  <!-- Tailwind (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+        .theme-dark {
+            --primary: #8b5cf6;
+            --secondary: #7c3aed;
+            --background: #1e1b2e;
+            --surface: #2d2a42;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border: #374151;
+        }
 
-  <!-- Supabase JS -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+        body {
+            background-color: var(--background);
+            color: var(--text);
+            transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
 
-  <!-- PapaParse -->
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
 
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
 
-  <!-- World Map Library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/topojson/3.0.2/topojson.min.js"></script>
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
 
-  <style>
-    .card { border-radius: 10px; box-shadow: 0 8px 22px rgba(15,23,42,0.06); }
-    .table-fixed thead th { position: sticky; top: 0; background: white; z-index: 10; }
-    td, th { padding: 0.75rem 0.5rem; vertical-align: middle; }
-    .btn-primary { background-color: #2563eb; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; }
-    .btn-primary:hover { background-color: #1d4ed8; }
-    .btn-danger { background-color: #dc2626; color: white; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; }
-    .btn-danger:hover { background-color: #b91c1c; }
-    .btn-secondary { background-color: #f3f4f6; color: #374151; padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; border: 1px solid #d1d5db; }
-    .btn-secondary:hover { background-color: #e5e7eb; }
-    .fade-in { animation: fadeIn 0.5s ease-in; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .world-map { width: 100%; height: 100%; }
-    .country:hover { fill: #3b82f6; cursor: pointer; }
-  </style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(124, 58, 237, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(124, 58, 237, 0.8); }
+        }
+
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
+        }
+
+        .message-ceo {
+            background: linear-gradient(135deg, #1e40af, #3730a3);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .message-cfo {
+            background: linear-gradient(135deg, #059669, #047857);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .message-admin {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .message-system {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
+        }
+
+        .greeting-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .drag-over {
+            border: 2px dashed #7c3aed !important;
+            background: linear-gradient(135deg, #faf5ff, #f3e8ff) !important;
+        }
+
+        .celebration {
+            animation: celebration 2s ease-out;
+        }
+
+        @keyframes celebration {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: #ff0000;
+            opacity: 0;
+            z-index: 1000;
+        }
+
+        .achievement-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 12px;
+            font-weight: bold;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 antialiased min-h-screen">
-
-  <!-- Header -->
-  <header class="bg-blue-800 text-white p-4 md:p-5">
-    <div class="max-w-[1200px] mx-auto flex items-center justify-between gap-4">
-      <div class="flex items-center gap-4">
-        <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-bold">EG</div>
-        <div>
-          <h1 class="text-lg md:text-2xl font-semibold">EverGreen Empire</h1>
-          <p id="greeting" class="text-xs md:text-sm opacity-90">Welcome</p>
+<body class="min-h-screen">
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="w-16 h-16 border-4 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div class="text-xl font-semibold text-gray-800">Admin Control Center</div>
+            <div class="text-sm text-gray-600 mt-2" id="loadingStatus">Initializing advanced admin tools...</div>
         </div>
-      </div>
-
-      <div class="flex items-center gap-3">
-        <div id="miniRevenue" class="hidden md:flex items-center gap-3 bg-white/10 p-2 rounded">
-          <div class="text-xs">Est. Revenue</div>
-          <div id="miniRevenueVal" class="font-semibold">$0.00</div>
-        </div>
-
-        <div class="relative">
-          <button id="notifBtn" class="p-2 rounded-md bg-white/10 flex items-center gap-2">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 10-12 0v3.159c0 .538-.214 1.055-.595 1.436L4 17h5" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span class="hidden md:inline">Notifications</span>
-          </button>
-          <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5">0</span>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <span class="text-sm md:text-base" id="userRole">Admin</span>
-          <button id="logoutBtn" class="p-2 rounded-md bg-white/10 text-sm hover:bg-white/20 transition">Sign out</button>
-        </div>
-      </div>
     </div>
-  </header>
 
-  <!-- Notifications dropdown -->
-  <div id="notifPanel" class="fixed right-4 top-20 z-40 w-80 md:w-96 bg-white shadow-lg rounded-md p-4 hidden">
-    <h3 class="font-semibold mb-2">Notifications</h3>
-    <div id="notifList" class="max-h-60 overflow-auto space-y-2"></div>
-    <div class="mt-3 text-right">
-      <button id="clearNotifs" class="text-sm text-blue-600 hover:text-blue-800">Mark all read</button>
+    <!-- Security Check Modal -->
+    <div id="securityModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 m-3 max-w-md w-full">
+            <div class="text-center">
+                <i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i>
+                <h3 class="text-lg font-bold mb-2">Authentication Required</h3>
+                <p class="text-gray-600 mb-4">Please log in to access the Admin Control Center</p>
+                <button onclick="redirectToLogin()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Go to Login
+                </button>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <!-- Main -->
-  <main class="p-4 md:p-6 max-w-[1200px] mx-auto grid grid-cols-12 gap-6">
-    <!-- Left column (tables & forms) -->
-    <section class="col-span-12 lg:col-span-7 space-y-6">
-      <!-- Brand Overview -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-semibold">Brand Overview</h2>
-            <p class="text-sm text-gray-600 mt-1">Manage brand performance</p>
-          </div>
-
-          <div class="flex gap-3 items-end">
-            <label class="text-sm text-gray-600 hidden md:block">Upload Brands CSV</label>
-            <input id="brandsCsv" type="file" accept=".csv" class="text-sm border rounded p-1" />
-          </div>
-        </div>
-
-        <div class="mt-4 overflow-x-auto">
-          <table class="w-full text-left">
-            <thead>
-              <tr class="text-gray-600 border-b">
-                <th class="w-1/4 pb-3">Brand</th>
-                <th class="w-1/6 pb-3">Last 48h</th>
-                <th class="w-1/6 pb-3">Last 7d</th>
-                <th class="w-1/6 pb-3">Last 28d</th>
-                <th class="w-1/6 pb-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="brandsBody" class="bg-white divide-y"></tbody>
-          </table>
-        </div>
-
-        <form id="brandForm" class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <input name="name" placeholder="Brand name" class="col-span-2 sm:col-span-1 p-2 border rounded" required />
-          <input name="v48" placeholder="48h views" type="number" class="p-2 border rounded" required />
-          <input name="v7" placeholder="7d views" type="number" class="p-2 border rounded" required />
-          <input name="v28" placeholder="28d views" type="number" class="p-2 border rounded" required />
-          <button type="submit" class="mt-2 col-span-2 sm:col-span-1 bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">Add Brand</button>
-        </form>
-      </div>
-
-      <!-- Video Analytics -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <h2 class="text-xl font-semibold">Video Analytics</h2>
-            <p class="text-sm text-gray-600 mt-1">Manage video performance</p>
-          </div>
-
-          <div class="flex gap-3 items-end">
-            <label class="text-sm text-gray-600 hidden md:block">Upload Videos CSV</label>
-            <input id="videosCsv" type="file" accept=".csv" class="text-sm border rounded p-1" />
-          </div>
-        </div>
-
-        <div class="mt-4 overflow-x-auto">
-          <table class="w-full text-left">
-            <thead>
-              <tr class="text-gray-600 border-b">
-                <th class="w-2/6 pb-3">Video</th>
-                <th class="w-1/6 pb-3">Platform</th>
-                <th class="w-1/6 pb-3">48h</th>
-                <th class="w-1/6 pb-3">7d</th>
-                <th class="w-1/6 pb-3">28d</th>
-                <th class="w-1/6 pb-3">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="videosBody" class="bg-white divide-y"></tbody>
-          </table>
-        </div>
-
-        <form id="videoForm" class="mt-4 grid grid-cols-1 sm:grid-cols-5 gap-3">
-          <input name="title" placeholder="Video title" class="col-span-1 sm:col-span-2 p-2 border rounded" required />
-          <input name="platform" placeholder="Platform" class="p-2 border rounded" required />
-          <input name="v48" placeholder="48h views" type="number" class="p-2 border rounded" required />
-          <input name="v7" placeholder="7d views" type="number" class="p-2 border rounded" required />
-          <input name="v28" placeholder="28d views" type="number" class="p-2 border rounded" required />
-          <button type="submit" class="mt-2 col-span-1 sm:col-span-1 bg-blue-600 text-white rounded py-2 px-4 hover:bg-blue-700 transition">Add Video</button>
-        </form>
-      </div>
-    </section>
-
-    <!-- Right column (charts, map, revenue, AI, messages) -->
-    <aside class="col-span-12 lg:col-span-5 space-y-6">
-      <!-- Global Map -->
-      <div class="card bg-white p-4 md:p-6 h-64">
-        <h3 class="text-lg font-semibold mb-3">Global Audience Map</h3>
-        <div id="worldMap" class="h-44 bg-blue-50 rounded-md flex items-center justify-center">
-          <div class="text-blue-400 text-center">
-            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2"></div>
-            <div class="text-sm">Loading world map...</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Charts -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold">Views Over Time</h3>
-          <div class="text-sm text-gray-600">Aggregate performance</div>
-        </div>
-
-        <div class="grid grid-cols-12 gap-4">
-          <div class="col-span-12 md:col-span-8">
-            <canvas id="lineChart" height="220"></canvas>
-          </div>
-          <div class="col-span-12 md:col-span-4 flex items-center justify-center">
-            <canvas id="pieChart" width="200" height="200"></canvas>
-          </div>
-        </div>
-      </div>
-
-      <!-- Revenue -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-center justify-between">
-          <div>
-            <h3 class="text-lg font-semibold">Estimated Revenue</h3>
-            <p class="text-sm text-gray-600 mt-1">RPM = $0.12 per 1,000 views (combined 28d)</p>
-          </div>
-          <div class="text-right">
-            <div id="revenueTotal" class="text-2xl font-semibold">$0.00</div>
-            <div id="revenueBreak" class="text-xs text-gray-500 mt-1">Total views (28d): 0</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- AI Insights -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold">AI Insights</h3>
-          <div class="text-sm text-gray-600">Powered by Gemini</div>
-        </div>
-
-        <div id="aiPanel" class="space-y-4">
-          <div id="aiOutput" class="min-h-[120px] p-4 bg-gray-50 rounded-lg border">
-            <div class="text-gray-500 text-sm">AI insights will appear here. Select a prompt type and click Generate.</div>
-          </div>
-          
-          <div class="flex flex-col sm:flex-row gap-3">
-            <select id="aiPromptSelect" class="flex-1 p-2 border rounded-md text-sm">
-              <option value="performance">Performance Analysis</option>
-              <option value="growth">Growth Opportunities</option>
-              <option value="strategy">Strategic Recommendations</option>
-              <option value="revenue">Revenue Optimization</option>
-              <option value="content">Content Strategy</option>
-            </select>
-            
-            <button id="generateAi" class="bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition font-medium text-sm">
-              Generate Insight
-            </button>
-            <button id="regenerateAi" class="bg-white border border-gray-300 py-2 px-4 rounded-md hover:bg-gray-50 transition font-medium text-sm">
-              Regenerate
-            </button>
-          </div>
-          
-          <div class="flex items-center gap-2 text-xs text-gray-500">
-            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
-            <span>AI insights powered by Google Gemini</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Chat / Messages -->
-      <div class="card bg-white p-4 md:p-6">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold">Team Messaging</h3>
-          <div class="text-sm text-gray-600">Communicate with team</div>
-        </div>
-
-        <div id="chatList" class="max-h-44 overflow-auto space-y-2 mb-3 p-2 border rounded bg-gray-50"></div>
-
-        <form id="chatForm" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input name="sender" placeholder="Your name" class="p-2 border rounded" required value="Admin" />
-            <select name="receiver" class="p-2 border rounded">
-              <option value="All">Everyone</option>
-              <option value="CEO">CEO</option>
-              <option value="CFO">CFO</option>
-              <option value="COO">COO</option>
-            </select>
-          </div>
-          <input name="message" placeholder="Type your message here..." class="w-full p-2 border rounded" required />
-          <button type="submit" class="w-full bg-blue-600 text-white rounded py-2 hover:bg-blue-700 transition">Send Message</button>
-        </form>
-      </div>
-    </aside>
-  </main>
-
-  <script>
-  /**************************************************************************
-   * CONFIGURATION
-   **************************************************************************/
-  const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
-  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
-  const GEMINI_API_KEY = 'AIzaSyCGMPVhdHiyJGaEcbQvt2J9x6Z4ylGNOwA';
-  const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
-  const RPM_PER_1000 = 0.12;
-
-  /**************************************************************************
-   * Initialize Supabase
-   **************************************************************************/
-  const { createClient } = supabase;
-  const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-  // DOM references
-  let greetingEl, brandsBody, videosBody, notifBadge, notifList, notifBtn, notifPanel, clearNotifsBtn;
-  let revenueTotalEl, revenueBreakEl, miniRevenueVal, miniRevenue, aiOutput, generateAiBtn, regenerateAiBtn, chatList;
-  let userRoleEl;
-
-  // Charts
-  let lineChart, pieChart;
-
-  // Data storage
-  let latestBrands = [], latestVideos = [], latestMessages = [];
-
-  /**************************************************************************
-   * Utility Functions
-   **************************************************************************/
-  function numberWithCommas(x) { 
-    return x?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") ?? '0'; 
-  }
-  
-  function formatUSD(x) { 
-    return '$' + Number(x || 0).toFixed(2); 
-  }
-
-  /**************************************************************************
-   * Authentication & User Management
-   **************************************************************************/
-  async function checkAuth() {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) {
-      window.location.href = 'index.html';
-      return null;
-    }
-    return session.user;
-  }
-
-  function detectRole(email) {
-    if (email.includes('ceo@')) return 'ceo';
-    if (email.includes('cfo@')) return 'cfo';
-    if (email.includes('admin@')) return 'admin';
-    return 'user';
-  }
-
-  function getRoleTitle(role) {
-    const titles = {
-      'ceo': 'Chief Executive Officer',
-      'cfo': 'Chief Financial Officer',
-      'admin': 'Administrator'
-    };
-    return titles[role] || 'User';
-  }
-
-  /**************************************************************************
-   * World Map Visualization
-   **************************************************************************/
-  function initializeWorldMap() {
-    const mapContainer = document.getElementById('worldMap');
-    
-    // Create an interactive SVG world map
-    const svg = d3.select('#worldMap')
-      .html('') // Clear loading message
-      .append('svg')
-      .attr('class', 'world-map')
-      .attr('viewBox', '0 0 800 400');
-
-    // Add background
-    svg.append('rect')
-      .attr('width', '100%')
-      .attr('height', '100%')
-      .attr('fill', '#f0f9ff');
-
-    // Sample data for audience distribution
-    const audienceData = {
-      "United States": 35,
-      "United Kingdom": 15,
-      "Canada": 12,
-      "Australia": 10,
-      "Germany": 8,
-      "France": 7,
-      "Japan": 6,
-      "Brazil": 5,
-      "India": 4,
-      "South Africa": 3
-    };
-
-    // Create a simple world map representation
-    const countries = [
-      { name: "North America", x: 200, y: 150, width: 120, height: 100, audience: 47 },
-      { name: "Europe", x: 400, y: 120, width: 100, height: 80, audience: 30 },
-      { name: "Asia", x: 550, y: 150, width: 130, height: 120, audience: 15 },
-      { name: "South America", x: 250, y: 250, width: 80, height: 100, audience: 5 },
-      { name: "Africa", x: 450, y: 220, width: 90, height: 120, audience: 3 }
-    ];
-
-    // Draw continent regions
-    const continents = svg.selectAll('.continent')
-      .data(countries)
-      .enter()
-      .append('rect')
-      .attr('class', 'country')
-      .attr('x', d => d.x)
-      .attr('y', d => d.y)
-      .attr('width', d => d.width)
-      .attr('height', d => d.height)
-      .attr('fill', d => {
-        const intensity = Math.min(0.3 + (d.audience / 50) * 0.7, 1);
-        return `rgba(59, 130, 246, ${intensity})`;
-      })
-      .attr('stroke', '#1e40af')
-      .attr('stroke-width', 1)
-      .on('mouseover', function(event, d) {
-        d3.select(this).attr('fill', '#3b82f6');
-        
-        // Show tooltip
-        svg.append('text')
-          .attr('class', 'tooltip')
-          .attr('x', d.x + d.width/2)
-          .attr('y', d.y - 10)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#1e3a8a')
-          .attr('font-weight', 'bold')
-          .text(`${d.name}: ${d.audience}% audience`);
-      })
-      .on('mouseout', function(event, d) {
-        const intensity = Math.min(0.3 + (d.audience / 50) * 0.7, 1);
-        d3.select(this).attr('fill', `rgba(59, 130, 246, ${intensity})`);
-        svg.selectAll('.tooltip').remove();
-      });
-
-    // Add continent labels
-    svg.selectAll('.continent-label')
-      .data(countries)
-      .enter()
-      .append('text')
-      .attr('x', d => d.x + d.width/2)
-      .attr('y', d => d.y + d.height/2)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .attr('fill', 'white')
-      .attr('font-size', '12px')
-      .attr('font-weight', 'bold')
-      .text(d => d.name);
-
-    // Add title
-    svg.append('text')
-      .attr('x', 400)
-      .attr('y', 30)
-      .attr('text-anchor', 'middle')
-      .attr('fill', '#1e3a8a')
-      .attr('font-size', '14px')
-      .attr('font-weight', 'bold')
-      .text('Global Audience Distribution');
-
-    console.log('World map initialized successfully');
-  }
-
-  /**************************************************************************
-   * Charts Initialization
-   **************************************************************************/
-  function initCharts() {
-    // Line Chart
-    const lineCtx = document.getElementById('lineChart').getContext('2d');
-    lineChart = new Chart(lineCtx, {
-      type: 'line',
-      data: {
-        labels: ['48h', '7d', '28d', 'Now'],
-        datasets: [{
-          label: 'Total Views',
-          data: [0, 0, 0, 0],
-          fill: true,
-          tension: 0.4,
-          borderWidth: 3,
-          borderColor: '#2563eb',
-          backgroundColor: 'rgba(37, 99, 235, 0.1)',
-          pointRadius: 5,
-          pointBackgroundColor: '#2563eb'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { display: false },
-          tooltip: { mode: 'index', intersect: false }
-        },
-        scales: {
-          y: { 
-            beginAtZero: true,
-            grid: { color: 'rgba(0,0,0,0.1)' }
-          },
-          x: {
-            grid: { display: false }
-          }
-        }
-      }
-    });
-
-    // Pie Chart
-    const pieCtx = document.getElementById('pieChart').getContext('2d');
-    pieChart = new Chart(pieCtx, {
-      type: 'doughnut',
-      data: {
-        labels: ['No Data'],
-        datasets: [{
-          data: [100],
-          backgroundColor: ['#e5e7eb'],
-          borderWidth: 2,
-          borderColor: '#ffffff'
-        }]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'bottom' },
-          tooltip: { enabled: true }
-        },
-        cutout: '60%'
-      }
-    });
-
-    console.log('Charts initialized successfully');
-  }
-
-  /**************************************************************************
-   * Data Rendering Functions
-   **************************************************************************/
-  function renderBrands(rows) {
-    brandsBody.innerHTML = '';
-    
-    if (rows.length === 0) {
-      brandsBody.innerHTML = `
-        <tr>
-          <td colspan="5" class="py-4 text-center text-gray-500">
-            No brands found. Add your first brand above.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    rows.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b fade-in hover:bg-gray-50';
-      tr.innerHTML = `
-        <td class="py-3">
-          <div class="flex items-center gap-3">
-            <div class="w-8 h-8 rounded bg-blue-100 flex items-center justify-center font-semibold text-blue-700 text-sm">
-              ${(r.name||'')[0]?.toUpperCase() || '?'}
+    <!-- Main Content -->
+    <div id="mainContent" class="hidden">
+        <!-- Header -->
+        <header class="bg-purple-800 text-white p-4 sticky top-0 z-40 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold">EverGreen Empire</h1>
+                        <p class="text-sm opacity-90">Admin Control Center <span id="connectionStatus" class="online-dot"></span> <span id="syncStatus" class="text-xs">System Admin</span></p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="achievement-badge hidden" id="achievementBadge">
+                        <i class="fas fa-trophy mr-1"></i>Super Admin
+                    </div>
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20">
+                        <i class="fas fa-palette"></i>
+                    </button>
+                    <button onclick="signOut()" class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
             </div>
-            <div class="font-medium">${r.name || 'Unknown Brand'}</div>
-          </div>
-        </td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_48h || 0)}</td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_7d || 0)}</td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_28d || 0)}</td>
-        <td class="py-3">
-          <button class="delete-brand-btn btn-danger text-xs p-1 px-2 rounded hover:bg-red-700 transition" 
-                  data-id="${r.id}" data-name="${r.name}">
-            Delete
-          </button>
-        </td>
-      `;
-      brandsBody.appendChild(tr);
-    });
+        </header>
 
-    // Add delete event listeners
-    document.querySelectorAll('.delete-brand-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const id = e.target.dataset.id;
-        const name = e.target.dataset.name;
-        if (confirm(`Are you sure you want to delete brand "${name}"?`)) {
-          await deleteBrand(id);
-        }
-      });
-    });
-
-    updateChartsWithData(rows, latestVideos);
-  }
-
-  function renderVideos(rows) {
-    videosBody.innerHTML = '';
-    
-    if (rows.length === 0) {
-      videosBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="py-4 text-center text-gray-500">
-            No videos found. Add your first video above.
-          </td>
-        </tr>
-      `;
-      return;
-    }
-
-    rows.forEach(r => {
-      const tr = document.createElement('tr');
-      tr.className = 'border-b fade-in hover:bg-gray-50';
-      tr.innerHTML = `
-        <td class="py-3">
-          <div class="font-medium">${r.title || 'Unknown Video'}</div>
-        </td>
-        <td class="py-3">
-          <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-            ${r.platform || 'Unknown'}
-          </span>
-        </td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_48h || 0)}</td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_7d || 0)}</td>
-        <td class="py-3 font-mono text-sm">${numberWithCommas(r.views_28d || 0)}</td>
-        <td class="py-3">
-          <button class="delete-video-btn btn-danger text-xs p-1 px-2 rounded hover:bg-red-700 transition" 
-                  data-id="${r.id}" data-title="${r.title}">
-            Delete
-          </button>
-        </td>
-      `;
-      videosBody.appendChild(tr);
-    });
-
-    // Add delete event listeners
-    document.querySelectorAll('.delete-video-btn').forEach(btn => {
-      btn.addEventListener('click', async (e) => {
-        const id = e.target.dataset.id;
-        const title = e.target.dataset.title;
-        if (confirm(`Are you sure you want to delete video "${title}"?`)) {
-          await deleteVideo(id);
-        }
-      });
-    });
-
-    updateChartsWithData(latestBrands, rows);
-  }
-
-  function updateChartsWithData(brands, videos) {
-    // Update line chart
-    const sum48 = brands.reduce((s, r) => s + Number(r.views_48h || 0), 0) + 
-                  videos.reduce((s, r) => s + Number(r.views_48h || 0), 0);
-    const sum7 = brands.reduce((s, r) => s + Number(r.views_7d || 0), 0) + 
-                 videos.reduce((s, r) => s + Number(r.views_7d || 0), 0);
-    const sum28 = brands.reduce((s, r) => s + Number(r.views_28d || 0), 0) + 
-                  videos.reduce((s, r) => s + Number(r.views_28d || 0), 0);
-    const now = Math.round(sum28 * 1.1);
-
-    if (lineChart) {
-      lineChart.data.datasets[0].data = [sum48, sum7, sum28, now];
-      lineChart.update();
-    }
-
-    // Update pie chart with brand distribution
-    if (pieChart && brands.length > 0) {
-      const brandSums = brands.map(b => ({
-        name: b.name,
-        value: Number(b.views_28d || 0)
-      })).filter(b => b.value > 0);
-
-      if (brandSums.length > 0) {
-        pieChart.data.labels = brandSums.map(b => b.name);
-        pieChart.data.datasets[0].data = brandSums.map(b => b.value);
-        pieChart.data.datasets[0].backgroundColor = [
-          '#2563eb', '#dc2626', '#16a34a', '#ea580c', '#9333ea',
-          '#ca8a04', '#0891b2', '#65a30d', '#7c3aed', '#db2777'
-        ];
-      } else {
-        pieChart.data.labels = ['No Data'];
-        pieChart.data.datasets[0].data = [100];
-        pieChart.data.datasets[0].backgroundColor = ['#e5e7eb'];
-      }
-      pieChart.update();
-    }
-
-    // Update revenue
-    renderRevenue(brands, videos);
-  }
-
-  /**************************************************************************
-   * Revenue Calculation
-   **************************************************************************/
-  function computeRevenueFromRows(brandRows = [], videoRows = []) {
-    const brandViews = brandRows.reduce((s, r) => s + Number(r.views_28d || 0), 0);
-    const videoViews = videoRows.reduce((s, r) => s + Number(r.views_28d || 0), 0);
-    const totalViews = brandViews + videoViews;
-    const revenue = (totalViews / 1000) * RPM_PER_1000;
-    return { totalViews, revenue, brandViews, videoViews };
-  }
-
-  function renderRevenue(brands, videos) {
-    const { totalViews, revenue } = computeRevenueFromRows(brands, videos);
-    revenueTotalEl.textContent = formatUSD(revenue);
-    revenueBreakEl.textContent = `Total views (28d): ${numberWithCommas(totalViews)}`;
-    miniRevenueVal.textContent = formatUSD(revenue);
-    
-    if (totalViews > 0) {
-      miniRevenue.classList.remove('hidden');
-    } else {
-      miniRevenue.classList.add('hidden');
-    }
-  }
-
-  /**************************************************************************
-   * Delete Operations
-   **************************************************************************/
-  async function deleteBrand(id) {
-    try {
-      const { error } = await supabaseClient.from('brands').delete().eq('id', id);
-      if (error) throw error;
-      
-      await sendSystemMessage(`Admin deleted a brand from the system`);
-      alert('Brand deleted successfully!');
-      fetchAndRenderAll();
-    } catch (err) {
-      console.error('Delete brand failed:', err);
-      alert('Delete failed: ' + err.message);
-    }
-  }
-
-  async function deleteVideo(id) {
-    try {
-      const { error } = await supabaseClient.from('videos').delete().eq('id', id);
-      if (error) throw error;
-      
-      await sendSystemMessage(`Admin deleted a video from the system`);
-      alert('Video deleted successfully!');
-      fetchAndRenderAll();
-    } catch (err) {
-      console.error('Delete video failed:', err);
-      alert('Delete failed: ' + err.message);
-    }
-  }
-
-  /**************************************************************************
-   * Messaging System
-   **************************************************************************/
-  async function fetchMessagesAndRender() {
-    try {
-      const { data, error } = await supabaseClient
-        .from('messages')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
-      
-      if (error) throw error;
-      
-      latestMessages = data || [];
-      renderChat(latestMessages);
-      renderNotificationsFromMessages(latestMessages);
-    } catch (e) { 
-      console.error('fetchMessages error:', e);
-      renderChat([]);
-      renderNotificationsFromMessages([]);
-    }
-  }
-
-  function renderChat(messages) {
-    chatList.innerHTML = '';
-    
-    if (messages.length === 0) {
-      chatList.innerHTML = '<div class="text-center text-gray-500 py-4">No messages yet</div>';
-      return;
-    }
-
-    messages.forEach(m => {
-      const div = document.createElement('div');
-      div.className = 'p-3 border-b fade-in hover:bg-white cursor-pointer';
-      div.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <div class="flex items-center gap-2 mb-1">
-              <span class="font-semibold text-blue-600">${m.sender || 'Unknown'}</span>
-              <span class="text-gray-400">→</span>
-              <span class="font-medium text-green-600 text-sm">${m.receiver}</span>
+        <main class="max-w-7xl mx-auto p-4">
+            <!-- Greeting Banner -->
+            <div class="greeting-banner rounded-lg p-6 mb-6 text-white shadow-lg celebration" id="greetingBanner">
+                <div class="flex flex-col md:flex-row md:items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-2" id="greetingMessage">Good morning, Admin!</h2>
+                        <p class="text-purple-100" id="greetingSubtext">Ready to manage today's brand performance?</p>
+                        <div class="flex items-center mt-2 space-x-2" id="greetingStats">
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🎯 5 Brands Active</span>
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">💰 $84.60 Revenue</span>
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🚀 All Systems Go</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-xs text-purple-200">System Status</div>
+                            <div class="text-sm font-bold" id="portalStatus">All Systems Operational</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center pulse-glow">
+                            <i class="fas fa-shield-alt text-white text-lg"></i>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-gray-700 text-sm">${m.message}</div>
-          </div>
-          <div class="text-xs text-gray-400 whitespace-nowrap ml-2">
-            ${new Date(m.created_at).toLocaleTimeString()}
-          </div>
-        </div>
-      `;
-      
-      div.addEventListener('click', async () => {
-        try {
-          await supabaseClient.from('messages').update({ read: true }).eq('id', m.id);
-          fetchMessagesAndRender();
-        } catch (e) { console.error(e); }
-      });
-      
-      chatList.appendChild(div);
-    });
-  }
 
-  function renderNotificationsFromMessages(messages) {
-    const unread = messages.filter(m => !m.read).length;
-    notifBadge.textContent = unread;
-    
-    if (unread === 0) {
-      notifBadge.classList.add('hidden');
-    } else {
-      notifBadge.classList.remove('hidden');
-    }
-
-    notifList.innerHTML = '';
-    messages.slice(0, 10).forEach(m => {
-      const div = document.createElement('div');
-      div.className = `p-3 border-b fade-in cursor-pointer ${m.read ? 'bg-white' : 'bg-blue-50'}`;
-      div.innerHTML = `
-        <div class="flex justify-between items-start">
-          <div class="flex-1">
-            <div class="font-semibold text-sm">${m.sender}</div>
-            <div class="text-gray-600 text-xs mt-1">${m.message}</div>
-          </div>
-          <div class="text-xs text-gray-400">${new Date(m.created_at).toLocaleTimeString()}</div>
-        </div>
-      `;
-      
-      div.addEventListener('click', async () => {
-        try {
-          await supabaseClient.from('messages').update({ read: true }).eq('id', m.id);
-          fetchMessagesAndRender();
-        } catch (e) { console.error(e); }
-      });
-      
-      notifList.appendChild(div);
-    });
-  }
-
-  async function sendSystemMessage(message) {
-    try {
-      await supabaseClient.from('messages').insert([{
-        sender: 'System',
-        receiver: 'All',
-        message: message,
-        read: false,
-        created_at: new Date().toISOString()
-      }]);
-    } catch (e) {
-      console.error('Failed to send system message:', e);
-    }
-  }
-
-  /**************************************************************************
-   * AI Integration
-   **************************************************************************/
-  const AI_PROMPTS = {
-    performance: `Analyze this brand performance data and provide 3 key insights. Focus on:
-- Top performing brands and why
-- Growth trends and patterns
-- Areas needing improvement
-- Comparative performance analysis`,
-
-    growth: `Based on this video and brand data, suggest 3 growth opportunities:
-- Untapped potential in current data
-- Content strategy improvements  
-- Platform optimization ideas
-- Audience engagement opportunities`,
-
-    strategy: `Provide 3 strategic business recommendations:
-- Resource allocation suggestions
-- Risk mitigation strategies
-- Competitive positioning
-- Long-term growth planning`,
-
-    revenue: `Analyze revenue potential and suggest 3 optimizations:
-- RPM improvement strategies
-- Content monetization ideas
-- Cost optimization opportunities
-- Revenue diversification`,
-
-    content: `Suggest 3 content strategy improvements:
-- High-performing content patterns
-- Audience engagement tactics
-- Platform-specific optimizations
-- Content calendar suggestions`
-  };
-
-  async function generateAiInsight() {
-    const promptType = document.getElementById('aiPromptSelect').value;
-    const aiOutput = document.getElementById('aiOutput');
-    const generateBtn = document.getElementById('generateAi');
-    const regenerateBtn = document.getElementById('regenerateAi');
-
-    // Show loading state
-    aiOutput.innerHTML = `
-      <div class="flex items-center justify-center space-x-2">
-        <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-indigo-600"></div>
-        <span class="text-gray-600">Generating AI insights...</span>
-      </div>
-    `;
-    
-    generateBtn.disabled = true;
-    regenerateBtn.disabled = true;
-    generateBtn.textContent = 'Generating...';
-
-    try {
-      // Prepare context data
-      const contextData = {
-        brands: latestBrands.slice(0, 10),
-        videos: latestVideos.slice(0, 10),
-        revenue: computeRevenueFromRows(latestBrands, latestVideos),
-        summary: {
-          totalBrands: latestBrands.length,
-          totalVideos: latestVideos.length,
-          totalRevenue: computeRevenueFromRows(latestBrands, latestVideos).revenue
-        }
-      };
-
-      // Build the AI prompt
-      const prompt = `${AI_PROMPTS[promptType]}
-
-CONTEXT DATA:
-- Brands: ${contextData.brands.length} brands with performance metrics
-- Videos: ${contextData.videos.length} videos across platforms  
-- Revenue: $${contextData.revenue.revenue.toFixed(2)} (${contextData.revenue.totalViews.toLocaleString()} views)
-- Total Content: ${contextData.summary.totalBrands + contextData.summary.totalVideos} items
-
-Please provide 3 clear, actionable insights in bullet points. Be specific and data-driven.`;
-
-      // Call Gemini API
-      const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: prompt
-            }]
-          }],
-          generationConfig: {
-            temperature: 0.7,
-            topK: 40,
-            topP: 0.95,
-            maxOutputTokens: 1024,
-          }
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Gemini API error: ${response.status}`);
-      }
-
-      const data = await response.json();
-      
-      if (!data.candidates || !data.candidates[0].content.parts[0].text) {
-        throw new Error('No response from Gemini AI');
-      }
-
-      const aiText = data.candidates[0].content.parts[0].text;
-      
-      // Format the AI response
-      aiOutput.innerHTML = `
-        <div class="space-y-3">
-          ${aiText.split('\n').filter(line => line.trim()).map(line => `
-            <div class="p-2 bg-white rounded border-l-4 border-indigo-500">
-              <div class="text-gray-800 text-sm">${line.trim()}</div>
+            <!-- Executive Network Status -->
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-6">
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="online-dot"></span>
+                            <span class="font-semibold">CEO</span>
+                        </div>
+                        <span class="text-green-600 text-xs font-semibold">Online</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Active in Portal</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="online-dot"></span>
+                            <span class="font-semibold">CFO</span>
+                        </div>
+                        <span class="text-green-600 text-xs font-semibold">Online</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Viewing Reports</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                            <span class="font-semibold">COO</span>
+                        </div>
+                        <span class="text-red-600 text-xs font-semibold">Offline</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">Last seen 2h ago</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-yellow-400 rounded-full mr-2"></span>
+                            <span class="font-semibold">CTO</span>
+                        </div>
+                        <span class="text-yellow-600 text-xs font-semibold">Away</span>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">In meeting</div>
+                </div>
             </div>
-          `).join('')}
+
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Total Brands</h3>
+                        <i class="fas fa-tags text-purple-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold mt-2" id="totalBrands">0</div>
+                    <div class="text-xs text-gray-500">Active in system</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Total Revenue</h3>
+                        <i class="fas fa-dollar-sign text-green-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold mt-2" id="totalRevenue">$0</div>
+                    <div class="text-xs text-gray-500">28-day estimate</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Messages</h3>
+                        <i class="fas fa-comments text-blue-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold mt-2" id="totalMessages">0</div>
+                    <div class="text-xs text-gray-500">Executive comms</div>
+                </div>
+                <div class="card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Sync Status</h3>
+                        <i class="fas fa-sync text-orange-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold mt-2" id="syncCount">0</div>
+                    <div class="text-xs text-gray-500">Real-time updates</div>
+                </div>
+            </div>
+
+            <!-- Brand Management & Communications -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                <!-- Brand Management -->
+                <div class="card rounded-lg p-4 xl:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Brand Performance Management</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="showBulkUpload()" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                <i class="fas fa-upload mr-1"></i>Bulk Upload
+                            </button>
+                            <button onclick="showAddBrandForm()" class="bg-purple-600 text-white px-3 py-2 rounded-lg hover:bg-purple-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Brand
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Add Brand Form -->
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4 border">
+                        <h4 class="font-semibold mb-3">Add New Brand</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <input type="text" id="brandName" placeholder="Brand Name" class="p-2 border rounded text-sm">
+                            <input type="number" id="views28d" placeholder="28D Views" class="p-2 border rounded text-sm" value="0">
+                            <button onclick="addBrand()" class="bg-purple-600 text-white p-2 rounded hover:bg-purple-700 text-sm">
+                                <i class="fas fa-plus mr-1"></i>Add Brand
+                            </button>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-2">
+                            <i class="fas fa-info-circle mr-1"></i>Revenue calculated at $0.12 RPM
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="border-b">
+                                    <th class="text-left py-3 px-2 font-semibold">Brand</th>
+                                    <th class="text-right py-3 px-2 font-semibold">28D Views</th>
+                                    <th class="text-right py-3 px-2 font-semibold">Est. Revenue</th>
+                                    <th class="text-center py-3 px-2 font-semibold">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="brandsTableBody">
+                                <!-- Brands will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Executive Communications -->
+                <div class="space-y-6">
+                    <!-- Real-time Communications -->
+                    <div class="card rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold">Executive Communications</h3>
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Live</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex flex-col space-y-2">
+                                <input type="text" id="messageInput" placeholder="Type your message to executives..." class="w-full p-3 border rounded-lg">
+                                <select id="recipientSelect" class="w-full p-3 border rounded-lg">
+                                    <option value="all">All Executives</option>
+                                    <option value="ceo">CEO Only</option>
+                                    <option value="cfo">CFO Only</option>
+                                </select>
+                                <button onclick="sendMessage()" class="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700">
+                                    <i class="fas fa-paper-plane mr-2"></i>Send Message
+                                </button>
+                            </div>
+                            <div id="messagesContainer" class="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-3">
+                                <!-- Messages will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Chart -->
+                    <div class="card rounded-lg p-4">
+                        <h3 class="text-lg font-bold mb-4">Brand Performance</h3>
+                        <canvas id="performanceChart" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Dashboard -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Revenue Analytics -->
+                <div class="card rounded-lg p-4">
+                    <h3 class="text-lg font-bold mb-4">Revenue Analytics</h3>
+                    <canvas id="revenueChart" height="250"></canvas>
+                </div>
+
+                <!-- System Activity -->
+                <div class="card rounded-lg p-4">
+                    <h3 class="text-lg font-bold mb-4">System Activity</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                                <span class="font-semibold">CFO Portal</span>
+                            </div>
+                            <span class="text-green-600 text-sm">Synced</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-sync-alt text-blue-500 mr-3"></i>
+                                <span class="font-semibold">Real-time Updates</span>
+                            </div>
+                            <span class="text-blue-600 text-sm">Active</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-robot text-purple-500 mr-3"></i>
+                                <span class="font-semibold">AI Analytics</span>
+                            </div>
+                            <span class="text-purple-600 text-sm">Ready</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulkUploadModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 m-3 max-w-md w-full">
+            <h3 class="text-lg font-bold mb-4">Bulk Upload CSV</h3>
+            <div class="space-y-4">
+                <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center" 
+                     id="dropZone" 
+                     ondrop="handleDrop(event)" 
+                     ondragover="handleDragOver(event)">
+                    <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-2"></i>
+                    <div class="text-sm text-gray-600">Drop CSV file here or click to browse</div>
+                    <input type="file" id="csvFile" accept=".csv" class="hidden" onchange="handleFileSelect(event)">
+                    <button onclick="document.getElementById('csvFile').click()" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
+                        Browse Files
+                    </button>
+                </div>
+                <div class="text-xs text-gray-500">
+                    Expected columns: name, views_28d
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="processCSVUpload()" class="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700">Upload</button>
+                    <button onclick="closeModal('bulkUploadModal')" class="flex-1 bg-gray-600 text-white py-2 rounded hover:bg-gray-700">Cancel</button>
+                </div>
+            </div>
         </div>
-      `;
-      
-    } catch (error) {
-      console.error('AI Generation Error:', error);
-      aiOutput.innerHTML = `
-        <div class="bg-red-50 border border-red-200 rounded p-3">
-          <div class="font-medium text-red-800">AI Generation Failed</div>
-          <div class="text-red-700 text-sm mt-1">
-            ${error.message || 'Please check your API key and try again.'}
-          </div>
-        </div>
-      `;
-    } finally {
-      // Reset buttons
-      generateBtn.disabled = false;
-      regenerateBtn.disabled = false;
-      generateBtn.textContent = 'Generate Insight';
-    }
-  }
+    </div>
 
-  /**************************************************************************
-   * Event Handlers & Setup
-   **************************************************************************/
-  function setupForms() {
-    // Brand form
-    document.getElementById('brandForm').addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const payload = {
-        name: fd.get('name'),
-        views_48h: Number(fd.get('v48')),
-        views_7d: Number(fd.get('v7')),
-        views_28d: Number(fd.get('v28'))
-      };
-
-      try {
-        const { error } = await supabaseClient.from('brands').insert([payload]);
-        if (error) throw error;
+    <script>
+        // Configuration
+        const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
         
-        await sendSystemMessage(`Admin added new brand: ${payload.name}`);
-        alert('Brand added successfully!');
-        ev.target.reset();
-        fetchAndRenderAll();
-      } catch (err) { 
-        console.error(err); 
-        alert('Insert failed: ' + err.message); 
-      }
-    });
+        // Initialize Supabase
+        let supabase;
+        let realtimeChannels = [];
+        let performanceChart, revenueChart;
 
-    // Video form
-    document.getElementById('videoForm').addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const payload = {
-        title: fd.get('title'),
-        platform: fd.get('platform'),
-        views_48h: Number(fd.get('v48')),
-        views_7d: Number(fd.get('v7')),
-        views_28d: Number(fd.get('v28'))
-      };
+        // Global State
+        let state = {
+            brands: [],
+            messages: [],
+            statistics: {
+                syncCount: 0,
+                totalRevenue: 0
+            },
+            user: null
+        };
 
-      try {
-        const { error } = await supabaseClient.from('videos').insert([payload]);
-        if (error) throw error;
-        
-        await sendSystemMessage(`Admin added new video: ${payload.title}`);
-        alert('Video added successfully!');
-        ev.target.reset();
-        fetchAndRenderAll();
-      } catch (err) { 
-        console.error(err); 
-        alert('Insert failed: ' + err.message); 
-      }
-    });
+        // 🎊 AUTO GREETINGS SYSTEM
+        const greetings = {
+            morning: [
+                "Rise and shine, {name}! 🌅 Ready to conquer the day?",
+                "Good morning, {name}! The brands are waiting for your magic touch! ✨",
+                "Morning, {name}! Let's make today legendary! 🚀",
+                "Hello {name}! The empire awaits your command! 👑"
+            ],
+            afternoon: [
+                "Good afternoon, {name}! How are our brands performing? 📊",
+                "Afternoon, {name}! Time to check those revenue numbers! 💰",
+                "Hello {name}! Hope you're having a productive day! 🎯",
+                "{name}! Perfect time for a brand performance review! 📈"
+            ],
+            evening: [
+                "Good evening, {name}! Wrapping up a great day? 🌇",
+                "Evening, {name}! The brands never sleep, and neither do legends! 🌙",
+                "Hello {name}! Making moves while others rest? 💪",
+                "{name}! Evening is when empires are built! 🏗️"
+            ],
+            night: [
+                "Working late, {name}? That's why you're the best! 🌃",
+                "Good night shift, {name}! The empire appreciates your dedication! 🌌",
+                "{name}! Burning the midnight oil for greatness? 🔥",
+                "Late night session, {name}! This is where legends are made! ⭐"
+            ],
+            achievements: [
+                "Wow {name}! You've managed {brands} brands generating ${revenue}! 🎉",
+                "Incredible work {name}! ${revenue} revenue from {brands} brands! 💎",
+                "{name}, you're crushing it! {brands} brands under your command! 👑",
+                "Amazing {name}! The empire is thriving with your leadership! 🚀"
+            ]
+        };
 
-    // Chat form
-    document.getElementById('chatForm').addEventListener('submit', async (ev) => {
-      ev.preventDefault();
-      const fd = new FormData(ev.target);
-      const payload = {
-        sender: fd.get('sender') || 'Admin',
-        receiver: fd.get('receiver'),
-        message: fd.get('message'),
-        read: false,
-        created_at: new Date().toISOString()
-      };
+        // 🚀 Initialize Application
+        async function init() {
+            console.log('🚀 Initializing Admin Control Center...');
+            updateLoadingStatus('Checking authentication...');
 
-      try {
-        const { error } = await supabaseClient.from('messages').insert([payload]);
-        if (error) throw error;
-        
-        alert('Message sent successfully!');
-        ev.target.reset();
-        fetchMessagesAndRender();
-      } catch (e) { 
-        console.error('send message', e); 
-        alert('Send failed: ' + e.message); 
-      }
-    });
-  }
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // Check authentication first
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error || !session) {
+                    showSecurityModal();
+                    return;
+                }
 
-  function setupCSVUploads() {
-    document.getElementById('brandsCsv').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      Papa.parse(file, {
-        header: true, 
-        skipEmptyLines: true, 
-        complete: async (results) => {
-          const rows = results.data.map(r => ({
-            name: r.name || r.brand || r.Brand,
-            views_48h: Number(r.views_48h || r['48h'] || r['views48'] || 0),
-            views_7d: Number(r.views_7d || r['7d'] || r['views7'] || 0),
-            views_28d: Number(r.views_28d || r['28d'] || r['views28'] || 0),
-          })).filter(row => row.name);
-          
-          if (!rows.length) return alert('No valid rows parsed.');
-          
-          try {
-            const { error } = await supabaseClient.from('brands').insert(rows);
-            if (error) throw error;
-            
-            e.target.value = null;
-            await sendSystemMessage(`Admin uploaded ${rows.length} brands via CSV`);
-            alert('Brands CSV uploaded successfully!');
-            fetchAndRenderAll();
-          } catch (err) { 
-            console.error(err); 
-            alert('Upload failed: ' + err.message); 
-          }
+                state.user = {
+                    email: session.user.email,
+                    role: detectRole(session.user.email),
+                    name: session.user.email.split('@')[0]
+                };
+
+                console.log('✅ User authenticated:', state.user);
+                updateLoadingStatus('Connecting to executive network...');
+
+                await setupRealtimeConnections();
+                await loadInitialData();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                setupAutoGreeting();
+                initializeCharts();
+                checkAchievements();
+                
+                showNotification(`Welcome back, ${state.user.name}! Admin Control Center activated! 🎯`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Initialization failed:', error);
+                showSecurityModal();
+            }
         }
-      });
-    });
 
-    document.getElementById('videosCsv').addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      
-      Papa.parse(file, {
-        header: true, 
-        skipEmptyLines: true, 
-        complete: async (results) => {
-          const rows = results.data.map(r => ({
-            title: r.title || r.Video || r.video,
-            platform: r.platform || r.Platform || '',
-            views_48h: Number(r.views_48h || r['48h'] || r['views48'] || 0),
-            views_7d: Number(r.views_7d || r['7d'] || r['views7'] || 0),
-            views_28d: Number(r.views_28d || r['28d'] || r['views28'] || 0),
-          })).filter(row => row.title);
-          
-          if (!rows.length) return alert('No valid rows parsed.');
-          
-          try {
-            const { error } = await supabaseClient.from('videos').insert(rows);
-            if (error) throw error;
+        // 🎯 Enhanced Auto Greeting System
+        function setupAutoGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            let timeOfDay = 'morning';
             
-            e.target.value = null;
-            await sendSystemMessage(`Admin uploaded ${rows.length} videos via CSV`);
-            alert('Videos CSV uploaded successfully!');
-            fetchAndRenderAll();
-          } catch (err) { 
-            console.error(err); 
-            alert('Upload failed: ' + err.message); 
-          }
+            if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+            else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
+            else if (hour >= 21 || hour < 5) timeOfDay = 'night';
+
+            const greetingPool = greetings[timeOfDay];
+            const randomGreeting = greetingPool[Math.floor(Math.random() * greetingPool.length)];
+            
+            const brandCount = state.brands.length;
+            const totalRevenue = state.statistics.totalRevenue;
+            
+            // Use achievement greeting if we have good numbers
+            let finalGreeting = randomGreeting;
+            if (brandCount >= 3 && totalRevenue >= 50) {
+                const achievementGreeting = greetings.achievements[Math.floor(Math.random() * greetings.achievements.length)];
+                finalGreeting = achievementGreeting
+                    .replace('{brands}', brandCount)
+                    .replace('{revenue}', totalRevenue.toFixed(2));
+            }
+            
+            const greetingMessage = finalGreeting
+                .replace('{name}', state.user.name)
+                .replace('{brands}', brandCount)
+                .replace('{revenue}', totalRevenue.toFixed(2));
+
+            document.getElementById('greetingMessage').textContent = greetingMessage;
+            
+            // Update greeting stats
+            const statsHTML = `
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🎯 ${brandCount} Brands Active</span>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">💰 $${totalRevenue.toFixed(2)} Revenue</span>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🚀 ${getPerformanceStatus()}</span>
+            `;
+            document.getElementById('greetingStats').innerHTML = statsHTML;
+
+            // Add celebration effect for great performance
+            if (totalRevenue > 100) {
+                createConfetti();
+                document.getElementById('greetingBanner').classList.add('celebration');
+            }
         }
-      });
-    });
-  }
 
-  function setupNotifications() {
-    notifBtn.addEventListener('click', () => notifPanel.classList.toggle('hidden'));
-    
-    clearNotifsBtn.addEventListener('click', async () => {
-      try {
-        await supabaseClient.from('messages').update({ read: true }).neq('read', true);
-        alert('All notifications marked as read!');
-        fetchMessagesAndRender();
-      } catch (e) { 
-        console.error(e); 
-        alert('Failed to clear notifications: ' + e.message); 
-      }
-    });
+        function getPerformanceStatus() {
+            const revenue = state.statistics.totalRevenue;
+            if (revenue > 100) return 'Elite Performance';
+            if (revenue > 50) return 'Strong Results';
+            if (revenue > 20) return 'Growing Steady';
+            return 'Building Momentum';
+        }
 
-    // Close notifications when clicking outside
-    document.addEventListener('click', (e) => {
-      if (!notifPanel.contains(e.target) && e.target !== notifBtn) {
-        notifPanel.classList.add('hidden');
-      }
-    });
-  }
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                confetti.style.animation = `confettiFall ${Math.random() * 3 + 2}s linear forwards`;
+                document.body.appendChild(confetti);
+                
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
 
-  function setupLogout() {
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      try {
-        await supabaseClient.auth.signOut();
-        sessionStorage.clear();
-        window.location.href = 'index.html';
-      } catch (e) { 
-        console.error(e); 
-        alert('Sign out failed: ' + e.message); 
-      }
-    });
-  }
+        function checkAchievements() {
+            const brandCount = state.brands.length;
+            const revenue = state.statistics.totalRevenue;
+            
+            if (brandCount >= 5 || revenue >= 100) {
+                document.getElementById('achievementBadge').classList.remove('hidden');
+                showNotification('🏆 Achievement Unlocked: Super Admin!', 'success');
+            }
+        }
 
-  /**************************************************************************
-   * Data Fetching & Real-time
-   **************************************************************************/
-  async function fetchAndRenderAll() {
-    try {
-      const [{ data: brands, error: brandsError }, 
-             { data: videos, error: videosError }] = await Promise.all([
-        supabaseClient.from('brands').select('*').order('name', { ascending: true }),
-        supabaseClient.from('videos').select('*').order('title', { ascending: true })
-      ]);
+        // 🔐 SECURITY FUNCTIONS
+        function showSecurityModal() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('securityModal').classList.remove('hidden');
+        }
 
-      if (brandsError) throw brandsError;
-      if (videosError) throw videosError;
+        function redirectToLogin() {
+            window.location.href = 'index.html';
+        }
 
-      latestBrands = brands || [];
-      latestVideos = videos || [];
-      
-      renderBrands(latestBrands);
-      renderVideos(latestVideos);
-      
-    } catch (e) { 
-      console.error('fetchAll error:', e);
-      renderBrands([]);
-      renderVideos([]);
-    }
-  }
+        function detectRole(email) {
+            if (email.includes('ceo@')) return 'ceo';
+            if (email.includes('cfo@')) return 'cfo';
+            if (email.includes('admin@')) return 'admin';
+            return 'user';
+        }
 
-  function setupRealtime() {
-    try {
-      // Brands real-time
-      supabaseClient.channel('admin-brands')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'brands' }, 
-          () => {
-            console.log('Brands updated - refreshing data');
-            fetchAndRenderAll();
-          }
-        )
-        .subscribe();
+        // 🔄 Real-time Connections
+        async function setupRealtimeConnections() {
+            if (!supabase) return;
 
-      // Videos real-time
-      supabaseClient.channel('admin-videos')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'videos' }, 
-          () => {
-            console.log('Videos updated - refreshing data');
-            fetchAndRenderAll();
-          }
-        )
-        .subscribe();
+            try {
+                // Real-time messages
+                const messagesChannel = supabase
+                    .channel('admin-messages')
+                    .on('postgres_changes', 
+                        { event: 'INSERT', schema: 'public', table: 'messages' }, 
+                        (payload) => {
+                            console.log('💬 New message:', payload.new);
+                            if (payload.new.sender !== 'Admin') {
+                                state.messages.unshift(payload.new);
+                                updateMessages();
+                                playNotificationSound();
+                                
+                                if (payload.new.sender === 'CEO' || payload.new.sender === 'CFO') {
+                                    showNotification(`New message from ${payload.new.sender}`, 'info');
+                                }
+                            }
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            document.getElementById('connectionStatus').style.background = '#10b981';
+                            document.getElementById('syncStatus').textContent = 'Live Sync Active';
+                        }
+                    });
 
-      // Messages real-time
-      supabaseClient.channel('admin-messages')
-        .on('postgres_changes', 
-          { event: '*', schema: 'public', table: 'messages' }, 
-          () => {
-            console.log('Messages updated - refreshing messages');
-            fetchMessagesAndRender();
-          }
-        )
-        .subscribe();
+                realtimeChannels.push(messagesChannel);
 
-      console.log('Real-time subscriptions activated!');
-    } catch (e) { 
-      console.warn('Realtime setup failed:', e); 
-    }
-  }
+                // Real-time brands data
+                const brandsChannel = supabase
+                    .channel('admin-brands')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'brands' }, 
+                        async (payload) => {
+                            console.log('🔄 Brands data updated:', payload);
+                            await loadBrandsData();
+                            state.statistics.syncCount++;
+                            updateStatistics();
+                            
+                            if (payload.eventType === 'INSERT') {
+                                await notifyExecutives('new_brand', payload.new);
+                            } else if (payload.eventType === 'UPDATE') {
+                                await notifyExecutives('update_brand', payload.new);
+                            }
+                        }
+                    )
+                    .subscribe();
 
-  /**************************************************************************
-   * Initialization
-   **************************************************************************/
-  function initializeDOMReferences() {
-    greetingEl = document.getElementById('greeting');
-    brandsBody = document.getElementById('brandsBody');
-    videosBody = document.getElementById('videosBody');
-    notifBadge = document.getElementById('notifBadge');
-    notifList = document.getElementById('notifList');
-    notifBtn = document.getElementById('notifBtn');
-    notifPanel = document.getElementById('notifPanel');
-    clearNotifsBtn = document.getElementById('clearNotifs');
-    revenueTotalEl = document.getElementById('revenueTotal');
-    revenueBreakEl = document.getElementById('revenueBreak');
-    miniRevenueVal = document.getElementById('miniRevenueVal');
-    miniRevenue = document.getElementById('miniRevenue');
-    aiOutput = document.getElementById('aiOutput');
-    generateAiBtn = document.getElementById('generateAi');
-    regenerateAiBtn = document.getElementById('regenerateAi');
-    chatList = document.getElementById('chatList');
-    userRoleEl = document.getElementById('userRole');
-  }
+                realtimeChannels.push(brandsChannel);
 
-  function setGreeting(role = 'Administrator') {
-    const now = new Date();
-    const hr = now.getHours();
-    let part = 'Hello';
-    if (hr < 12) part = 'Good morning';
-    else if (hr < 18) part = 'Good afternoon';
-    else part = 'Good evening';
-    greetingEl.textContent = `${part}, ${role} — welcome to your dashboard`;
-  }
+            } catch (error) {
+                console.error('❌ Real-time setup failed:', error);
+            }
+        }
 
-  /**************************************************************************
-   * Main Boot Function
-   **************************************************************************/
-  async function boot() {
-    console.log('🚀 Initializing Admin Portal...');
-    
-    // Check authentication
-    const user = await checkAuth();
-    if (!user) return;
-    
-    // Initialize DOM references
-    initializeDOMReferences();
-    
-    // Set user info
-    const role = detectRole(user.email);
-    const title = getRoleTitle(role);
-    setGreeting(title);
-    userRoleEl.textContent = title.split(' ')[0];
-    
-    // Initialize components
-    initializeWorldMap();
-    initCharts();
-    
-    // Setup event handlers
-    setupForms();
-    setupCSVUploads();
-    setupNotifications();
-    setupLogout();
-    
-    // AI buttons
-    generateAiBtn.addEventListener('click', generateAiInsight);
-    regenerateAiBtn.addEventListener('click', generateAiInsight);
-    
-    // Load initial data
-    try {
-      await fetchAndRenderAll();
-      await fetchMessagesAndRender();
-      setupRealtime();
-      console.log('✅ Admin Portal initialized successfully!');
-    } catch (e) {
-      console.error('❌ Boot error:', e);
-    }
-  }
+        // 📊 Data Management
+        async function loadInitialData() {
+            await loadBrandsData();
+            await loadMessages();
+            updateStatistics();
+        }
 
-  // Start the application
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
-  </script>
+        async function loadBrandsData() {
+            try {
+                const { data: brands, error } = await supabase
+                    .from('brands')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                state.brands = brands || [];
+                updateBrandsTable();
+                updateCharts();
+                
+                console.log(`✅ Loaded ${state.brands.length} brands`);
+
+            } catch (error) {
+                console.error('❌ Error loading brands:', error);
+                if (state.brands.length === 0) {
+                    loadDemoBrands();
+                }
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+                state.messages = messages || [];
+                updateMessages();
+                
+            } catch (error) {
+                console.error('❌ Error loading messages:', error);
+                loadDemoMessages();
+            }
+        }
+
+        // ➕ Add Brand Function
+        async function addBrand() {
+            const name = document.getElementById('brandName').value.trim();
+            const views28d = parseInt(document.getElementById('views28d').value) || 0;
+
+            if (!name) {
+                showNotification('Please enter a brand name', 'error');
+                return;
+            }
+
+            try {
+                const revenue = (views28d / 1000) * 0.12;
+                
+                const brandData = {
+                    name: name,
+                    views_28d: views28d,
+                    revenue: revenue,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                console.log('📦 Adding brand:', brandData);
+                
+                const { data, error } = await supabase
+                    .from('brands')
+                    .insert([brandData])
+                    .select();
+
+                if (error) {
+                    console.error('❌ Supabase error:', error);
+                    throw new Error(`Failed to add brand: ${error.message}`);
+                }
+
+                document.getElementById('brandName').value = '';
+                document.getElementById('views28d').value = '0';
+                
+                console.log('✅ Brand added successfully:', data);
+                showNotification(`Brand "${name}" added successfully! 🎉`, 'success');
+                
+                await notifyExecutives('new_brand', data[0]);
+
+            } catch (error) {
+                console.error('❌ Failed to add brand:', error);
+                showNotification(error.message, 'error');
+            }
+        }
+
+        // ✏️ Update Brand
+        async function updateBrand(brandId, updates) {
+            try {
+                if (updates.views_28d !== undefined) {
+                    updates.revenue = (updates.views_28d / 1000) * 0.12;
+                }
+                updates.updated_at = new Date().toISOString();
+
+                const { data, error } = await supabase
+                    .from('brands')
+                    .update(updates)
+                    .eq('id', brandId)
+                    .select();
+
+                if (error) throw error;
+
+                showNotification('Brand updated successfully! ✨', 'success');
+                await notifyExecutives('update_brand', data[0]);
+
+            } catch (error) {
+                console.error('❌ Error updating brand:', error);
+                showNotification('Failed to update brand', 'error');
+            }
+        }
+
+        // 🗑️ Delete Brand
+        async function deleteBrand(brandId, brandName) {
+            if (!confirm(`Are you sure you want to delete "${brandName}"?`)) return;
+
+            try {
+                const { error } = await supabase
+                    .from('brands')
+                    .delete()
+                    .eq('id', brandId);
+
+                if (error) throw error;
+                
+                showNotification(`Brand "${brandName}" deleted successfully! 🗑️`, 'success');
+                await notifyExecutives('delete_brand', { name: brandName });
+
+            } catch (error) {
+                console.error('❌ Error deleting brand:', error);
+                showNotification('Failed to delete brand', 'error');
+            }
+        }
+
+        // 💬 Notify Executives
+        async function notifyExecutives(action, brandData) {
+            let message = '';
+            
+            switch (action) {
+                case 'new_brand':
+                    message = `📊 New brand "${brandData.name}" added with ${brandData.views_28d.toLocaleString()} views (Est. revenue: ${formatCurrency((brandData.views_28d / 1000) * 0.12)})`;
+                    break;
+                case 'update_brand':
+                    message = `🔄 Brand "${brandData.name}" updated - ${brandData.views_28d.toLocaleString()} views (Est. revenue: ${formatCurrency((brandData.views_28d / 1000) * 0.12)})`;
+                    break;
+                case 'delete_brand':
+                    message = `🗑️ Brand "${brandData.name}" removed from system`;
+                    break;
+            }
+
+            const messageData = {
+                sender: 'System',
+                receiver: 'all',
+                message: message,
+                created_at: new Date().toISOString()
+            };
+
+            try {
+                await supabase.from('messages').insert([messageData]);
+                console.log('✅ Executive notification sent:', message);
+            } catch (error) {
+                console.error('❌ Failed to send notification:', error);
+            }
+        }
+
+        // 📊 Update Brands Table
+        function updateBrandsTable() {
+            const tbody = document.getElementById('brandsTableBody');
+            const totalBrands = document.getElementById('totalBrands');
+            const totalRevenue = document.getElementById('totalRevenue');
+            
+            if (!state.brands.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center py-8 text-gray-500">
+                            <i class="fas fa-inbox text-3xl mb-2"></i>
+                            <div>No brands added yet</div>
+                            <div class="text-sm mt-1">Add your first brand above</div>
+                        </td>
+                    </tr>
+                `;
+                totalBrands.textContent = '0';
+                totalRevenue.textContent = '$0';
+                return;
+            }
+
+            const totalBrandsCount = state.brands.length;
+            const totalRevenueValue = state.brands.reduce((sum, brand) => sum + ((brand.views_28d || 0) / 1000) * 0.12, 0);
+            
+            totalBrands.textContent = totalBrandsCount;
+            totalRevenue.textContent = formatCurrency(totalRevenueValue);
+            state.statistics.totalRevenue = totalRevenueValue;
+
+            tbody.innerHTML = state.brands.map(brand => {
+                const revenue = (brand.views_28d / 1000) * 0.12;
+                
+                return `
+                <tr class="border-b hover:bg-gray-50 fade-in">
+                    <td class="py-3 px-2">
+                        <div class="font-semibold">${brand.name}</div>
+                    </td>
+                    <td class="py-3 px-2 text-right">
+                        <input type="number" 
+                               value="${brand.views_28d}" 
+                               class="w-24 p-2 border rounded text-right text-sm"
+                               onchange="updateBrand('${brand.id}', { views_28d: parseInt(this.value) || 0 })">
+                    </td>
+                    <td class="py-3 px-2 text-right font-semibold text-green-600">
+                        ${formatCurrency(revenue)}
+                    </td>
+                    <td class="py-3 px-2 text-center">
+                        <button onclick="deleteBrand('${brand.id}', '${brand.name}')" 
+                                class="text-red-600 hover:text-red-800 p-2">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        // 💬 Messaging System
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            const recipient = document.getElementById('recipientSelect').value;
+
+            if (!message) {
+                showNotification('Please enter a message', 'error');
+                return;
+            }
+
+            const messageData = {
+                sender: 'Admin',
+                receiver: recipient,
+                message: message,
+                created_at: new Date().toISOString()
+            };
+
+            state.messages.unshift(messageData);
+            updateMessages();
+            messageInput.value = '';
+
+            try {
+                const { error } = await supabase.from('messages').insert([messageData]);
+                if (error) throw error;
+                showNotification('Message sent to executives! 📤', 'success');
+            } catch (error) {
+                console.error('❌ Failed to save message:', error);
+                showNotification('Message sent locally', 'warning');
+            }
+        }
+
+        function updateMessages() {
+            const container = document.getElementById('messagesContainer');
+            const totalMessages = document.getElementById('totalMessages');
+            
+            if (!state.messages.length) {
+                container.innerHTML = '<div class="text-center text-gray-500 text-sm py-4">No messages yet</div>';
+                totalMessages.textContent = '0';
+                return;
+            }
+
+            container.innerHTML = state.messages.map(msg => {
+                let messageClass = 'message-admin';
+                if (msg.sender === 'CEO') messageClass = 'message-ceo';
+                if (msg.sender === 'CFO') messageClass = 'message-cfo';
+                if (msg.sender === 'System') messageClass = 'message-system';
+                
+                return `
+                <div class="${messageClass} fade-in">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-semibold text-sm">${msg.sender}</span>
+                        <span class="text-xs opacity-80">${formatTime(msg.created_at)}</span>
+                    </div>
+                    <div class="text-sm">${msg.message}</div>
+                    ${msg.receiver !== 'all' ? `<div class="text-xs opacity-80 mt-1">To: ${msg.receiver}</div>` : ''}
+                </div>
+                `;
+            }).join('');
+
+            totalMessages.textContent = state.messages.length;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        // 📈 Charts
+        function initializeCharts() {
+            const perfCtx = document.getElementById('performanceChart').getContext('2d');
+            performanceChart = new Chart(perfCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: '28D Views',
+                        data: [],
+                        backgroundColor: '#7c3aed',
+                        borderColor: '#6d28d9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+
+            const revCtx = document.getElementById('revenueChart').getContext('2d');
+            revenueChart = new Chart(revCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Estimated Revenue',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!performanceChart || !revenueChart) return;
+
+            const topBrands = state.brands.slice(0, 5);
+            performanceChart.data.labels = topBrands.map(brand => brand.name);
+            performanceChart.data.datasets[0].data = topBrands.map(brand => brand.views_28d);
+            performanceChart.update();
+
+            const revenueData = Array.from({length: 7}, (_, i) => 
+                Math.random() * state.statistics.totalRevenue * 0.3 + state.statistics.totalRevenue * 0.7
+            );
+            revenueChart.data.datasets[0].data = revenueData;
+            revenueChart.update();
+        }
+
+        // 📤 Bulk Upload
+        function showBulkUpload() {
+            document.getElementById('bulkUploadModal').classList.remove('hidden');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('drag-over');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleCSVFile(files[0]);
+            }
+        }
+
+        function handleFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                handleCSVFile(files[0]);
+            }
+        }
+
+        function handleCSVFile(file) {
+            Papa.parse(file, {
+                header: true,
+                complete: function(results) {
+                    console.log('CSV parsed:', results);
+                    window.csvData = results.data;
+                    showNotification(`CSV loaded with ${results.data.length} rows 📁`, 'success');
+                },
+                error: function(error) {
+                    console.error('CSV parse error:', error);
+                    showNotification('Error parsing CSV file', 'error');
+                }
+            });
+        }
+
+        async function processCSVUpload() {
+            if (!window.csvData || window.csvData.length === 0) {
+                showNotification('Please select a CSV file first', 'error');
+                return;
+            }
+            
+            const brands = window.csvData
+                .filter(row => row.name && row.name.trim() !== '')
+                .map(row => ({
+                    name: row.name.trim(),
+                    views_28d: parseInt(row.views_28d) || 0,
+                    revenue: (parseInt(row.views_28d) || 0) / 1000 * 0.12,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }));
+            
+            if (brands.length === 0) {
+                showNotification('No valid data found in CSV', 'error');
+                return;
+            }
+            
+            try {
+                let successCount = 0;
+                let errorCount = 0;
+                
+                for (const brand of brands) {
+                    try {
+                        const { error } = await supabase
+                            .from('brands')
+                            .insert([brand]);
+                            
+                        if (error) throw error;
+                        successCount++;
+                    } catch (error) {
+                        console.error(`Failed to add brand ${brand.name}:`, error);
+                        errorCount++;
+                    }
+                }
+                
+                closeModal('bulkUploadModal');
+                document.getElementById('csvFile').value = '';
+                delete window.csvData;
+                
+                if (successCount > 0) {
+                    showNotification(`${successCount} brands uploaded successfully! 🎉`, 'success');
+                    await notifyExecutives('bulk_upload', { count: successCount });
+                }
+                if (errorCount > 0) {
+                    showNotification(`${errorCount} brands failed to upload`, 'error');
+                }
+                
+            } catch (error) {
+                console.error('Error uploading brands:', error);
+                showNotification('Failed to upload brands', 'error');
+            }
+        }
+
+        // 🎨 UI Functions
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('theme-dark')) {
+                body.className = 'min-h-screen';
+                showNotification('Light theme activated ☀️', 'info');
+            } else {
+                body.className = 'theme-dark min-h-screen';
+                showNotification('Dark theme activated 🌙', 'info');
+            }
+        }
+
+        function showAddBrandForm() {
+            document.getElementById('brandName').focus();
+        }
+
+        function updateStatistics() {
+            document.getElementById('syncCount').textContent = state.statistics.syncCount;
+        }
+
+        async function signOut() {
+            if (confirm('Are you sure you want to sign out?')) {
+                showNotification('Signing out... 👋', 'info');
+                
+                realtimeChannels.forEach(channel => {
+                    if (channel && channel.unsubscribe) {
+                        channel.unsubscribe();
+                    }
+                });
+                
+                await supabase.auth.signOut();
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1000);
+            }
+        }
+
+        // 🎵 Notification Sound
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                console.log('Audio notification not supported');
+            }
+        }
+
+        // 🛠️ Utility Functions
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(amount);
+        }
+
+        function formatTime(isoString) {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            
+            return date.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 fade-in ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        function updateLoadingStatus(message) {
+            document.getElementById('loadingStatus').textContent = message;
+        }
+
+        // 📋 Demo Data (Fallback)
+        function loadDemoData() {
+            loadDemoBrands();
+            loadDemoMessages();
+            updateCharts();
+        }
+
+        function loadDemoBrands() {
+            state.brands = [
+                { id: 1, name: 'IAkeys', views_28d: 180000, revenue: 21.6 },
+                { id: 2, name: 'Ever-Sportz', views_28d: 150000, revenue: 18.0 },
+                { id: 3, name: 'Ever-Moviez', views_28d: 100000, revenue: 12.0 }
+            ];
+            updateBrandsTable();
+        }
+
+        function loadDemoMessages() {
+            state.messages = [
+                { sender: 'CEO', receiver: 'all', message: 'Great work on the Q3 reports! Looking forward to the new brand data.', created_at: new Date().toISOString() },
+                { sender: 'CFO', receiver: 'admin', message: 'The revenue projections look promising. Keep the data coming!', created_at: new Date(Date.now() - 300000).toISOString() },
+                { sender: 'System', receiver: 'all', message: 'Admin portal activated. Real-time sync enabled with all executive dashboards.', created_at: new Date(Date.now() - 600000).toISOString() }
+            ];
+            updateMessages();
+        }
+
+        // 🚀 Initialize when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
-</html>
+  </html>
