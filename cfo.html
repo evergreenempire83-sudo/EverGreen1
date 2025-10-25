@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EverGreen Empire — AI CFO Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -72,34 +73,46 @@
                 white-space: nowrap;
             }
         }
-        .shake {
-            animation: shake 0.5s ease-in-out;
-        }
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
-        }
         .financial-card {
             transition: all 0.3s ease;
         }
         .financial-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
         .greeting-banner {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+        
+        /* Calm color palette */
+        .calm-bg-1 { background-color: #f8fafc; }
+        .calm-bg-2 { background-color: #f1f5f9; }
+        .calm-bg-3 { background-color: #e2e8f0; }
+        .calm-text-1 { color: #475569; }
+        .calm-text-2 { color: #64748b; }
+        .calm-border { border-color: #e2e8f0; }
+        
+        /* Calm chart colors */
+        .calm-primary { background-color: #4f46e5; }
+        .calm-secondary { background-color: #0ea5e9; }
+        .calm-success { background-color: #10b981; }
+        .calm-warning { background-color: #f59e0b; }
+        .calm-info { background-color: #8b5cf6; }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="calm-bg-1 min-h-screen">
     <!-- Authentication Check Screen -->
     <div id="authCheckScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
         <div class="text-center">
             <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div class="text-xl font-semibold text-gray-800">Security Verification</div>
-            <div class="text-sm text-gray-600 mt-2" id="authStatus">Checking authentication...</div>
+            <div class="text-xl font-semibold calm-text-1">Security Verification</div>
+            <div class="text-sm calm-text-2 mt-2" id="authStatus">Checking authentication...</div>
         </div>
     </div>
 
@@ -107,8 +120,8 @@
     <div id="loadingScreen" class="fixed inset-0 bg-white z-40 flex items-center justify-center hidden">
         <div class="text-center">
             <div class="w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div class="text-xl font-semibold text-gray-800">AI CFO Portal</div>
-            <div class="text-sm text-gray-600 mt-2" id="loadingStatus">Loading financial dashboard...</div>
+            <div class="text-xl font-semibold calm-text-1">AI CFO Portal</div>
+            <div class="text-sm calm-text-2 mt-2" id="loadingStatus">Loading financial dashboard...</div>
         </div>
     </div>
 
@@ -120,21 +133,21 @@
                     <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
                 </div>
                 <div>
-                    <h3 class="text-lg font-bold text-gray-800">Session Timeout Warning</h3>
-                    <p class="text-sm text-gray-600">You will be logged out due to inactivity</p>
+                    <h3 class="text-lg font-bold calm-text-1">Session Timeout Warning</h3>
+                    <p class="text-sm calm-text-2">You will be logged out due to inactivity</p>
                 </div>
             </div>
             <div class="mb-4">
-                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                <div class="flex justify-between text-sm calm-text-2 mb-1">
                     <span>Time remaining:</span>
                     <span id="timeRemaining">2:00</span>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="w-full calm-bg-3 rounded-full h-2">
                     <div id="timeoutProgress" class="bg-red-600 h-2 rounded-full transition-all duration:1000" style="width: 100%"></div>
                 </div>
             </div>
             <div class="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-3">
-                <button id="cancelLogout" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-all text-sm sm:text-base">
+                <button id="cancelLogout" class="px-4 py-2 calm-bg-3 calm-text-1 rounded-lg hover:calm-bg-2 transition-all text-sm sm:text-base">
                     Stay Logged In
                 </button>
                 <button id="confirmLogout" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all text-sm sm:text-base">
@@ -150,8 +163,8 @@
             <div class="w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-6">
                 <i class="fas fa-ban text-red-600 text-2xl"></i>
             </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Access Denied</h2>
-            <p class="text-gray-600 mb-6">You don't have permission to access the CFO Portal. Please login with a CFO account.</p>
+            <h2 class="text-2xl font-bold calm-text-1 mb-4">Access Denied</h2>
+            <p class="calm-text-2 mb-6">You don't have permission to access the CFO Portal. Please login with a CFO account.</p>
             <button onclick="redirectToLogin()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all">
                 <i class="fas fa-sign-in-alt mr-2"></i>Go to Login
             </button>
@@ -161,7 +174,7 @@
     <!-- Main Portal Content (Hidden until authenticated) -->
     <div id="portalContent" class="hidden">
         <!-- Header -->
-        <header class="bg-green-800 text-white p-4 sticky top-0 z-40 shadow-lg">
+        <header class="bg-green-700 text-white p-4 sticky top-0 z-40 shadow-sm">
             <div class="max-w-7xl mx-auto flex items-center justify-between">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
@@ -200,9 +213,9 @@
             </div>
             
             <!-- Mobile Menu -->
-            <div id="mobileMenu" class="mobile-menu md:hidden mt-4 bg-green-700 rounded-lg p-4 hidden">
+            <div id="mobileMenu" class="mobile-menu md:hidden mt-4 bg-green-600 rounded-lg p-4 hidden">
                 <div class="flex flex-col space-y-3">
-                    <div class="text-white text-sm p-2 border-b border-green-600">
+                    <div class="text-white text-sm p-2 border-b border-green-500">
                         <div class="font-medium" id="mobileUserEmail">CFO User</div>
                         <div class="text-xs opacity-80" id="mobileSessionTimer">Session: 30:00</div>
                     </div>
@@ -225,7 +238,7 @@
         <!-- Main Content -->
         <main class="max-w-7xl mx-auto p-4">
             <!-- Greeting Banner -->
-            <div class="greeting-banner rounded-lg p-6 mb-6 text-white shadow-lg">
+            <div class="greeting-banner rounded-lg p-6 mb-6 text-white shadow-sm">
                 <div class="flex flex-col md:flex-row md:items-center justify-between">
                     <div>
                         <h2 class="text-2xl font-bold mb-2" id="greetingMessage">Good morning, CFO!</h2>
@@ -244,19 +257,19 @@
             </div>
 
             <!-- Welcome Banner -->
-            <div class="bg-white rounded-lg p-4 shadow-sm border mb-6">
+            <div class="bg-white rounded-lg p-4 shadow-sm calm-border border mb-6">
                 <div class="flex flex-col md:flex-row md:items-center justify-between">
                     <div class="mb-4 md:mb-0">
-                        <h2 class="text-xl font-bold text-gray-800 mb-1">Financial Command Center</h2>
-                        <p class="text-sm text-gray-600">AI-Powered Financial Analytics & Executive Network</p>
+                        <h2 class="text-xl font-bold calm-text-1 mb-1">Financial Command Center</h2>
+                        <p class="text-sm calm-text-2">AI-Powered Financial Analytics & Executive Network</p>
                     </div>
                     <div class="flex items-center space-x-2">
                         <div class="text-right">
-                            <div class="text-xs text-gray-600">AI Status</div>
+                            <div class="text-xs calm-text-2">AI Status</div>
                             <div class="text-sm font-bold text-green-600" id="aiStatus">Waiting for Data</div>
                         </div>
-                        <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center">
-                            <i class="fas fa-brain text-gray-400 text-lg"></i>
+                        <div class="w-12 h-12 rounded-full calm-bg-2 flex items-center justify-center">
+                            <i class="fas fa-brain calm-text-2 text-lg"></i>
                         </div>
                     </div>
                 </div>
@@ -317,12 +330,45 @@
                 </div>
             </div>
 
+            <!-- Financial Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Revenue Trend Chart -->
+                <div class="bg-white rounded-lg p-4 shadow-sm calm-border border">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center calm-text-1">
+                            <i class="fas fa-chart-line mr-2 text-green-500"></i>Revenue Trend (Last 12 Months)
+                        </h3>
+                        <button onclick="refreshRevenueChart()" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-all text-sm">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Expense Breakdown Chart -->
+                <div class="bg-white rounded-lg p-4 shadow-sm calm-border border">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold flex items-center calm-text-1">
+                            <i class="fas fa-chart-bar mr-2 text-blue-500"></i>Expense Breakdown
+                        </h3>
+                        <button onclick="refreshExpenseChart()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-all text-sm">
+                            <i class="fas fa-sync-alt mr-1"></i>Refresh
+                        </button>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Financial Statements & AI Analytics -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                 <!-- Profit & Loss Statement -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border lg:col-span-2">
+                <div class="bg-white rounded-lg p-4 shadow-sm calm-border border lg:col-span-2">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold flex items-center">
+                        <h3 class="text-lg font-bold flex items-center calm-text-1">
                             <i class="fas fa-file-invoice-dollar mr-2 text-green-500"></i>Profit & Loss Statement
                         </h3>
                         <div class="flex space-x-2">
@@ -337,20 +383,20 @@
                     <div class="overflow-x-auto">
                         <table class="w-full text-sm">
                             <thead>
-                                <tr class="border-b-2 border-gray-200">
-                                    <th class="text-left py-3 font-semibold">Category</th>
-                                    <th class="text-right py-3 font-semibold">Current Qtr</th>
-                                    <th class="text-right py-3 font-semibold">Prev Qtr</th>
-                                    <th class="text-right py-3 font-semibold">Variance</th>
+                                <tr class="border-b-2 calm-border">
+                                    <th class="text-left py-3 font-semibold calm-text-1">Category</th>
+                                    <th class="text-right py-3 font-semibold calm-text-1">Current Qtr</th>
+                                    <th class="text-right py-3 font-semibold calm-text-1">Prev Qtr</th>
+                                    <th class="text-right py-3 font-semibold calm-text-1">Variance</th>
                                 </tr>
                             </thead>
                             <tbody id="plStatementBody">
                                 <tr>
                                     <td colspan="4" class="text-center py-8">
                                         <div class="empty-state">
-                                            <i class="fas fa-file-invoice-dollar text-4xl text-gray-400 mb-4"></i>
-                                            <div class="text-gray-600 font-semibold mb-2">No Financial Data Available</div>
-                                            <div class="text-sm text-gray-500">Waiting for Admin to upload financial data</div>
+                                            <i class="fas fa-file-invoice-dollar text-4xl calm-text-2 mb-4"></i>
+                                            <div class="calm-text-1 font-semibold mb-2">No Financial Data Available</div>
+                                            <div class="text-sm calm-text-2">Waiting for Admin to upload financial data</div>
                                         </div>
                                     </td>
                                 </tr>
@@ -359,82 +405,10 @@
                     </div>
                 </div>
 
-                <!-- Balance Sheet -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold flex items-center">
-                            <i class="fas fa-balance-scale mr-2 text-blue-500"></i>Balance Sheet
-                        </h3>
-                        <button onclick="generateBalanceSheet()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-all text-sm">
-                            <i class="fas fa-sync-alt mr-1"></i>Update
-                        </button>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <h4 class="font-semibold text-gray-700 mb-2">Assets</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Cash & Equivalents</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Accounts Receivable</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Inventory</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between border-t pt-2">
-                                    <span class="text-sm font-semibold">Total Assets</span>
-                                    <span class="text-sm font-semibold">$0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-700 mb-2">Liabilities</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Accounts Payable</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Short-term Debt</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between border-t pt-2">
-                                    <span class="text-sm font-semibold">Total Liabilities</span>
-                                    <span class="text-sm font-semibold">$0</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <h4 class="font-semibold text-gray-700 mb-2">Equity</h4>
-                            <div class="space-y-2">
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Retained Earnings</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between">
-                                    <span class="text-sm">Common Stock</span>
-                                    <span class="text-sm font-medium">$0</span>
-                                </div>
-                                <div class="flex justify-between border-t pt-2">
-                                    <span class="text-sm font-semibold">Total Equity</span>
-                                    <span class="text-sm font-semibold">$0</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- AI Insights & Communications -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
                 <!-- AI Financial Advisor -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border">
+                <div class="bg-white rounded-lg p-4 shadow-sm calm-border border">
                     <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold flex items-center">
+                        <h3 class="text-lg font-bold flex items-center calm-text-1">
                             <i class="fas fa-robot mr-2 text-purple-500"></i>AI Financial Advisor
                         </h3>
                         <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Gemini AI Ready</span>
@@ -442,20 +416,20 @@
                     <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-2">
                             <button onclick="generateAIInsight('revenue')" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg text-sm transition-all">
-                                 Revenue Analysis
+                                📈 Revenue Analysis
                             </button>
                             <button onclick="generateAIInsight('profitability')" class="bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg text-sm transition-all">
-                                 Profitability
+                                📊 Profitability
                             </button>
                             <button onclick="generateAIInsight('costs')" class="bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg text-sm transition-all">
-                                 Cost Analysis
+                                💰 Cost Analysis
                             </button>
                             <button onclick="generateAIInsight('investment')" class="bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg text-sm transition-all">
-                                 Investments
+                                📈 Investments
                             </button>
                         </div>
-                        <div id="aiOutput" class="min-h-[200px] max-h-[300px] overflow-y-auto p-3 bg-gray-50 rounded-lg border">
-                            <div class="text-center text-gray-500 py-8">
+                        <div id="aiOutput" class="min-h-[200px] max-h-[300px] overflow-y-auto p-3 calm-bg-2 rounded-lg calm-border border">
+                            <div class="text-center calm-text-2 py-8">
                                 <i class="fas fa-robot text-2xl mb-2 text-purple-500"></i>
                                 <div class="text-sm">Select an analysis type to get AI insights</div>
                                 <div class="text-xs mt-1">Powered by Google Gemini</div>
@@ -466,90 +440,37 @@
                         </button>
                     </div>
                 </div>
-
-                <!-- Executive Communications -->
-                <div class="bg-white rounded-lg p-4 shadow-sm border">
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-lg font-bold">Executive Communications</h3>
-                        <div class="flex items-center text-xs text-green-600">
-                            <span class="online-dot"></span>
-                            <span>Live with CEO & Admin</span>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex flex-col space-y-2">
-                            <input type="text" id="messageInput" placeholder="Type your message to CEO or Admin..." class="w-full p-2 border rounded-lg text-sm">
-                            <select id="recipientSelect" class="w-full p-2 border rounded-lg text-sm">
-                                <option value="all">All Executives (CEO & Admin)</option>
-                                <option value="ceo">CEO Only</option>
-                                <option value="admin">Admin Team Only</option>
-                                <option value="cfo">CFO Team Only</option>
-                            </select>
-                            <button onclick="sendMessage()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-all">
-                                <i class="fas fa-paper-plane mr-1"></i>Send Message
-                            </button>
-                        </div>
-                        <div id="messagesContainer" class="max-h-48 overflow-y-auto space-y-2 border rounded-lg p-2">
-                            <div class="text-center text-gray-500 text-sm py-4">Loading executive messages...</div>
-                        </div>
-                        <div class="flex flex-col md:flex-row md:items-center justify-between text-xs text-gray-500">
-                            <span>Connected to: CEO, Admin, CFO</span>
-                            <span id="messageCount" class="mt-1 md:mt-0">0 messages</span>
-                        </div>
-                    </div>
-                </div>
             </div>
 
-            <!-- Financial Spreadsheet -->
-            <div class="bg-white rounded-lg p-4 shadow-sm border mb-6">
-                <div class="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold mb-2 md:mb-0">Financial Spreadsheet</h3>
-                    <div class="flex space-x-2">
-                        <button onclick="addRow()" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 transition-all text-sm">
-                            <i class="fas fa-plus mr-1"></i>Add Row
-                        </button>
-                        <button onclick="calculateTotals()" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-all text-sm">
-                            <i class="fas fa-calculator mr-1"></i>Calculate
-                        </button>
-                        <button onclick="exportSpreadsheet()" class="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700 transition-all text-sm">
-                            <i class="fas fa-download mr-1"></i>Export
-                        </button>
+            <!-- Executive Communications -->
+            <div class="bg-white rounded-lg p-4 shadow-sm calm-border border mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold calm-text-1">Executive Communications</h3>
+                    <div class="flex items-center text-xs text-green-600">
+                        <span class="online-dot"></span>
+                        <span>Live with CEO & Admin</span>
                     </div>
                 </div>
-                <div class="overflow-x-auto responsive-table">
-                    <table class="w-full min-w-[600px] text-sm">
-                        <thead>
-                            <tr class="border-b-2 border-gray-200">
-                                <th class="text-left py-3 font-semibold">Account</th>
-                                <th class="text-right py-3 font-semibold">Budget</th>
-                                <th class="text-right py-3 font-semibold">Actual</th>
-                                <th class="text-right py-3 font-semibold">Variance</th>
-                                <th class="text-right py-3 font-semibold">%</th>
-                                <th class="text-center py-3 font-semibold">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="spreadsheetBody">
-                            <tr>
-                                <td colspan="6" class="text-center py-8">
-                                    <div class="empty-state">
-                                        <i class="fas fa-table text-4xl text-gray-400 mb-4"></i>
-                                        <div class="text-gray-600 font-semibold mb-2">No Spreadsheet Data</div>
-                                        <div class="text-sm text-gray-500">Add rows to start tracking financial data</div>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                        <tfoot>
-                            <tr class="border-t-2 border-gray-300 font-semibold">
-                                <td class="py-3">Total</td>
-                                <td class="text-right py-3" id="totalBudget">$0</td>
-                                <td class="text-right py-3" id="totalActual">$0</td>
-                                <td class="text-right py-3" id="totalVariance">$0</td>
-                                <td class="text-right py-3" id="totalVariancePercent">0%</td>
-                                <td></td>
-                            </tr>
-                        </tfoot>
-                    </table>
+                <div class="space-y-4">
+                    <div class="flex flex-col space-y-2">
+                        <input type="text" id="messageInput" placeholder="Type your message to CEO or Admin..." class="w-full p-2 calm-border border rounded-lg text-sm">
+                        <select id="recipientSelect" class="w-full p-2 calm-border border rounded-lg text-sm">
+                            <option value="all">All Executives (CEO & Admin)</option>
+                            <option value="ceo">CEO Only</option>
+                            <option value="admin">Admin Team Only</option>
+                            <option value="cfo">CFO Team Only</option>
+                        </select>
+                        <button onclick="sendMessage()" class="w-full bg-green-600 text-white py-2 rounded-lg hover:bg-green-700 transition-all">
+                            <i class="fas fa-paper-plane mr-1"></i>Send Message
+                        </button>
+                    </div>
+                    <div id="messagesContainer" class="max-h-48 overflow-y-auto space-y-2 calm-border border rounded-lg p-2">
+                        <div class="text-center calm-text-2 text-sm py-4">Loading executive messages...</div>
+                    </div>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between text-xs calm-text-2">
+                        <span>Connected to: CEO, Admin, CFO</span>
+                        <span id="messageCount" class="mt-1 md:mt-0">0 messages</span>
+                    </div>
                 </div>
             </div>
         </main>
@@ -560,13 +481,10 @@
         const SUPABASE_URL = 'https://clhaquwjevqdzjobthdz.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
         
-        // Gemini AI Configuration (Replace with your actual API key)
-        const GEMINI_API_KEY = 'YOUR_GEMINI_API_KEY';
-        const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
-        
         // Initialize Supabase
         let supabase;
         let realtimeChannels = [];
+        let revenueChart, expenseChart;
 
         // Auto logout variables
         let inactivityTimer;
@@ -586,11 +504,10 @@
                 profit: 0,
                 cashFlow: 0,
                 roi: 0
-            },
-            spreadsheetData: []
+            }
         };
 
-        //  AUTHENTICATION SECURITY FUNCTIONS
+        // AUTHENTICATION SECURITY FUNCTIONS
         async function checkAuthentication() {
             updateAuthStatus('Initializing security...');
             
@@ -662,7 +579,7 @@
             sessionTimer = setInterval(updateSessionTimer, 1000);
         }
 
-        //  AUTO GREETING FUNCTIONALITY
+        // AUTO GREETING FUNCTIONALITY
         function setupAutoGreeting() {
             const now = new Date();
             const hour = now.getHours();
@@ -713,7 +630,7 @@
             window.location.href = 'index.html';
         }
 
-        //  AUTO LOGOUT SYSTEM
+        // AUTO LOGOUT SYSTEM
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
             clearTimeout(logoutWarningTimer);
@@ -770,7 +687,7 @@
             });
         }
 
-        //  LOGOUT FUNCTION
+        // LOGOUT FUNCTION
         async function signOut() {
             showNotification('Signing out...', 'info');
             
@@ -805,7 +722,7 @@
             }, 1000);
         }
 
-        //  PORTAL FUNCTIONALITY
+        // PORTAL FUNCTIONALITY
         async function initializePortal() {
             updateLoadingStatus('Initializing AI CFO Portal...');
             
@@ -816,9 +733,11 @@
                 updateLoadingStatus('Loading financial data...');
                 await loadInitialData();
                 
+                // Initialize charts
+                initializeCharts();
+                
                 // Initialize financial statements with $0 values
                 initializePLStatement();
-                initializeSpreadsheet();
                 
                 // Show main content
                 document.getElementById('loadingScreen').classList.add('hidden');
@@ -884,7 +803,7 @@
                             table: 'brands' 
                         }, 
                         async (payload) => {
-                            console.log(' Brands data updated by Admin:', payload);
+                            console.log('Brands data updated by Admin:', payload);
                             await loadBrandsData();
                             showNotification('Financial data updated from Admin!', 'success');
                         }
@@ -955,6 +874,115 @@
             }
         }
 
+        // CHARTS INITIALIZATION
+        function initializeCharts() {
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            
+            // Revenue Trend Chart (Line Chart)
+            revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                    datasets: [{
+                        label: 'Monthly Revenue ($)',
+                        data: Array(12).fill(0),
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Expense Breakdown Chart (Bar Chart)
+            expenseChart = new Chart(expenseCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Marketing', 'Operations', 'R&D', 'Salaries', 'Admin', 'Other'],
+                    datasets: [{
+                        label: 'Expense Amount ($)',
+                        data: Array(6).fill(0),
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(107, 114, 128, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (state.brands.length === 0) return;
+            
+            // Update revenue chart with simulated data
+            const baseRevenue = state.financialData.revenue / 12;
+            const revenueData = Array.from({length: 12}, (_, i) => {
+                const variation = (Math.random() - 0.5) * 0.4; // ±20% variation
+                return baseRevenue * (1 + variation);
+            });
+            
+            revenueChart.data.datasets[0].data = revenueData;
+            revenueChart.update();
+            
+            // Update expense chart with simulated data
+            const totalExpenses = state.financialData.revenue * 0.65; // Assuming 65% expense ratio
+            const expenseCategories = [0.25, 0.20, 0.15, 0.25, 0.10, 0.05]; // Distribution percentages
+            const expenseData = expenseCategories.map(pct => totalExpenses * pct);
+            
+            expenseChart.data.datasets[0].data = expenseData;
+            expenseChart.update();
+        }
+
         // FINANCIAL CALCULATIONS - Only runs when Admin adds data
         function calculateFinancialMetrics() {
             let totalRevenue = 0;
@@ -990,6 +1018,9 @@
             state.financialData.cashFlow = cashFlow;
             state.financialData.roi = profitMargin;
 
+            // Update charts with new data
+            updateCharts();
+
             // Update AI status
             document.getElementById('aiStatus').textContent = 'AI Analyzing Data';
             document.getElementById('aiStatus').classList.remove('text-gray-600');
@@ -1004,115 +1035,13 @@
                 <tr>
                     <td colspan="4" class="text-center py-8">
                         <div class="empty-state">
-                            <i class="fas fa-file-invoice-dollar text-4xl text-gray-400 mb-4"></i>
-                            <div class="text-gray-600 font-semibold mb-2">No Financial Data Available</div>
-                            <div class="text-sm text-gray-500">Waiting for Admin to upload financial data</div>
+                            <i class="fas fa-file-invoice-dollar text-4xl calm-text-2 mb-4"></i>
+                            <div class="calm-text-1 font-semibold mb-2">No Financial Data Available</div>
+                            <div class="text-sm calm-text-2">Waiting for Admin to upload financial data</div>
                         </div>
                     </td>
                 </tr>
             `;
-        }
-
-        function initializeSpreadsheet() {
-            // Start with empty spreadsheet
-            state.spreadsheetData = [];
-            calculateTotals();
-        }
-
-        function updateSpreadsheet(index, field, value) {
-            if (field === 'budget' || field === 'actual') {
-                value = parseFloat(value) || 0;
-            }
-            state.spreadsheetData[index][field] = value;
-            calculateTotals();
-        }
-
-        function addRow() {
-            state.spreadsheetData.push({
-                account: 'New Account',
-                budget: 0,
-                actual: 0
-            });
-            updateSpreadsheetUI();
-            showNotification('New row added to spreadsheet', 'success');
-        }
-
-        function deleteRow(index) {
-            state.spreadsheetData.splice(index, 1);
-            updateSpreadsheetUI();
-            showNotification('Row deleted from spreadsheet', 'info');
-        }
-
-        function updateSpreadsheetUI() {
-            const tbody = document.getElementById('spreadsheetBody');
-            
-            if (state.spreadsheetData.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-8">
-                            <div class="empty-state">
-                                <i class="fas fa-table text-4xl text-gray-400 mb-4"></i>
-                                <div class="text-gray-600 font-semibold mb-2">No Spreadsheet Data</div>
-                                <div class="text-sm text-gray-500">Add rows to start tracking financial data</div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            tbody.innerHTML = state.spreadsheetData.map((item, index) => {
-                const variance = item.actual - item.budget;
-                const variancePercent = item.budget !== 0 ? (variance / item.budget) * 100 : 0;
-                const isPositive = variance >= 0;
-                
-                return `
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="py-2"><input type="text" value="${item.account}" class="w-full p-1 border rounded" onchange="updateSpreadsheet(${index}, 'account', this.value)"></td>
-                    <td class="py-2"><input type="number" value="${item.budget}" class="w-full p-1 border rounded text-right" onchange="updateSpreadsheet(${index}, 'budget', this.value)"></td>
-                    <td class="py-2"><input type="number" value="${item.actual}" class="w-full p-1 border rounded text-right" onchange="updateSpreadsheet(${index}, 'actual', this.value)"></td>
-                    <td class="py-2 text-right ${isPositive ? 'text-green-600' : 'text-red-600'}">${isPositive ? '+' : ''}${formatCurrency(variance)}</td>
-                    <td class="py-2 text-right ${isPositive ? 'text-green-600' : 'text-red-600'}">${isPositive ? '+' : ''}${variancePercent.toFixed(1)}%</td>
-                    <td class="py-2 text-center">
-                        <button onclick="deleteRow(${index})" class="text-red-600 hover:text-red-800">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                </tr>
-                `;
-            }).join('');
-            
-            calculateTotals();
-        }
-
-        function calculateTotals() {
-            let totalBudget = 0;
-            let totalActual = 0;
-            
-            state.spreadsheetData.forEach(item => {
-                totalBudget += item.budget;
-                totalActual += item.actual;
-            });
-            
-            const totalVariance = totalActual - totalBudget;
-            const totalVariancePercent = totalBudget !== 0 ? (totalVariance / totalBudget) * 100 : 0;
-            
-            document.getElementById('totalBudget').textContent = formatCurrency(totalBudget);
-            document.getElementById('totalActual').textContent = formatCurrency(totalActual);
-            document.getElementById('totalVariance').textContent = formatCurrency(totalVariance);
-            document.getElementById('totalVariancePercent').textContent = `${totalVariancePercent.toFixed(1)}%`;
-            
-            // Update color based on variance
-            const varianceElement = document.getElementById('totalVariance');
-            const percentElement = document.getElementById('totalVariancePercent');
-            
-            if (totalVariance >= 0) {
-                varianceElement.className = 'text-right py-3 text-green-600 font-semibold';
-                percentElement.className = 'text-right py-3 text-green-600 font-semibold';
-            } else {
-                varianceElement.className = 'text-right py-3 text-red-600 font-semibold';
-                percentElement.className = 'text-right py-3 text-red-600 font-semibold';
-            }
         }
 
         // AI INTEGRATION
@@ -1132,32 +1061,44 @@
                 setTimeout(() => {
                     const insights = {
                         revenue: state.financialData.revenue > 0 ? [
-                            " Revenue Analysis: Your Q3 revenue shows strong performance.",
-                            ` Current revenue: ${formatCurrency(state.financialData.revenue)}`,
-                            " Areas for improvement: Consider expanding to new markets",
-                            " Recommendation: Focus on high-margin product lines"
+                            "📈 Revenue Analysis: Your Q3 revenue shows strong performance.",
+                            `💰 Current revenue: ${formatCurrency(state.financialData.revenue)}`,
+                            "📊 Areas for improvement: Consider expanding to new markets",
+                            "💡 Recommendation: Focus on high-margin product lines"
                         ] : [
-                            " Revenue Analysis: No revenue data available yet.",
-                            " Waiting for Admin to upload brand performance data",
-                            " Financial metrics will update automatically",
-                            " Suggestion: Contact Admin to upload CSV data"
+                            "📈 Revenue Analysis: No revenue data available yet.",
+                            "📊 Waiting for Admin to upload brand performance data",
+                            "💡 Financial metrics will update automatically",
+                            "🔍 Suggestion: Contact Admin to upload CSV data"
                         ],
                         profitability: state.financialData.profit > 0 ? [
-                            " Profitability Analysis: Strong margins detected",
-                            ` Current profit: ${formatCurrency(state.financialData.profit)}`,
-                            " Well-controlled operating expenses",
-                            " Opportunity: Further optimize supply chain"
+                            "📊 Profitability Analysis: Strong margins detected",
+                            `💰 Current profit: ${formatCurrency(state.financialData.profit)}`,
+                            "✅ Well-controlled operating expenses",
+                            "🚀 Opportunity: Further optimize supply chain"
                         ] : [
-                            " Profitability Analysis: No profit data available",
-                            " Waiting for financial data from Admin",
-                            " Profit calculations will appear here",
-                            " Check back after Admin uploads data"
+                            "📊 Profitability Analysis: No profit data available",
+                            "📈 Waiting for financial data from Admin",
+                            "💡 Profit calculations will appear here",
+                            "🔍 Check back after Admin uploads data"
+                        ],
+                        costs: [
+                            "💰 Cost Analysis: Reviewing expense patterns",
+                            "📉 Fixed costs are within expected ranges",
+                            "📈 Variable costs aligned with revenue growth",
+                            "💡 Suggestion: Implement cost tracking by department"
+                        ],
+                        investment: [
+                            "📈 Investment Analysis: Evaluating ROI opportunities",
+                            "🚀 Current ROI performance is stable",
+                            "💼 Consider diversifying investment portfolio",
+                            "📊 Monitor capital expenditure efficiency"
                         ]
                     };
 
                     aiOutput.innerHTML = (insights[type] || insights.revenue).map(insight => `
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900">${insight}</div>
+                            <div class="text-sm font-medium calm-text-1">${insight}</div>
                         </div>
                     `).join('');
 
@@ -1168,7 +1109,7 @@
                 console.error('AI analysis error:', error);
                 aiOutput.innerHTML = `
                     <div class="ai-insight fade-in">
-                        <div class="text-sm font-medium text-gray-900"> AI service temporarily unavailable. Using cached insights.</div>
+                        <div class="text-sm font-medium calm-text-1">⚠️ AI service temporarily unavailable. Using cached insights.</div>
                     </div>
                 `;
                 showNotification('AI service issue - using fallback data', 'warning');
@@ -1188,25 +1129,25 @@
                 if (state.financialData.revenue > 0) {
                     aiOutput.innerHTML = `
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Immediate Opportunity: Optimize working capital management</div>
+                            <div class="text-sm font-medium calm-text-1">🚀 Immediate Opportunity: Optimize working capital management</div>
                         </div>
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Growth Focus: Expand into complementary product lines</div>
+                            <div class="text-sm font-medium calm-text-1">📈 Growth Focus: Expand into complementary product lines</div>
                         </div>
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Risk Management: Review currency exposure for international sales</div>
+                            <div class="text-sm font-medium calm-text-1">🛡️ Risk Management: Review currency exposure for international sales</div>
                         </div>
                     `;
                 } else {
                     aiOutput.innerHTML = `
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Quick Advice: Contact Admin to upload brand performance data</div>
+                            <div class="text-sm font-medium calm-text-1">🚀 Quick Advice: Contact Admin to upload brand performance data</div>
                         </div>
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Once data is available, I'll provide specific recommendations</div>
+                            <div class="text-sm font-medium calm-text-1">📈 Once data is available, I'll provide specific recommendations</div>
                         </div>
                         <div class="ai-insight fade-in">
-                            <div class="text-sm font-medium text-gray-900"> Financial metrics update automatically when data is added</div>
+                            <div class="text-sm font-medium calm-text-1">🛡️ Financial metrics update automatically when data is added</div>
                         </div>
                     `;
                 }
@@ -1267,7 +1208,7 @@
             const messageCount = document.getElementById('messageCount');
             
             if (!state.messages.length) {
-                container.innerHTML = '<div class="text-center text-gray-500 text-sm py-4">No messages yet</div>';
+                container.innerHTML = '<div class="text-center calm-text-2 text-sm py-4">No messages yet</div>';
                 messageCount.textContent = '0 messages';
                 return;
             }
@@ -1294,6 +1235,31 @@
             container.scrollTop = container.scrollHeight;
         }
 
+        // CHART REFRESH FUNCTIONS
+        function refreshRevenueChart() {
+            if (state.brands.length > 0) {
+                showNotification('Refreshing revenue data...', 'info');
+                setTimeout(() => {
+                    updateCharts();
+                    showNotification('Revenue chart updated!', 'success');
+                }, 1000);
+            } else {
+                showNotification('No revenue data available to refresh', 'warning');
+            }
+        }
+
+        function refreshExpenseChart() {
+            if (state.brands.length > 0) {
+                showNotification('Refreshing expense data...', 'info');
+                setTimeout(() => {
+                    updateCharts();
+                    showNotification('Expense chart updated!', 'success');
+                }, 1000);
+            } else {
+                showNotification('No expense data available to refresh', 'warning');
+            }
+        }
+
         // EXPORT FUNCTIONS
         function exportPLStatement() {
             if (state.financialData.revenue > 0) {
@@ -1303,17 +1269,6 @@
                 }, 1500);
             } else {
                 showNotification('No financial data available to export', 'warning');
-            }
-        }
-
-        function exportSpreadsheet() {
-            if (state.spreadsheetData.length > 0) {
-                showNotification('Exporting financial spreadsheet...', 'info');
-                setTimeout(() => {
-                    showNotification('Spreadsheet exported successfully!', 'success');
-                }, 1500);
-            } else {
-                showNotification('No spreadsheet data available to export', 'warning');
             }
         }
 
@@ -1328,13 +1283,6 @@
             }
         }
 
-        function generateBalanceSheet() {
-            showNotification('Updating balance sheet...', 'info');
-            setTimeout(() => {
-                showNotification('Balance sheet updated!', 'success');
-            }, 1500);
-        }
-
         // ZERO DATA STATE
         function loadZeroData() {
             // All values remain at 0
@@ -1344,7 +1292,6 @@
             document.getElementById('roi').textContent = '0%';
             
             initializePLStatement();
-            initializeSpreadsheet();
         }
 
         function loadDemoMessages() {
@@ -1453,11 +1400,11 @@
 
         function toggleTheme() {
             const body = document.body;
-            if (body.classList.contains('bg-gray-50')) {
+            if (body.classList.contains('calm-bg-1')) {
                 body.className = 'bg-gray-900 text-white min-h-screen';
                 showNotification('Dark theme activated', 'info');
             } else {
-                body.className = 'bg-gray-50 min-h-screen';
+                body.className = 'calm-bg-1 min-h-screen';
                 showNotification('Light theme activated', 'info');
             }
         }
@@ -1508,4 +1455,4 @@
         });
     </script>
 </body>
-                        </html>
+    </html>
