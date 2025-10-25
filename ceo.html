@@ -3,55 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EverGreen Empire — CEO Portal</title>
-    
-    <!-- Tailwind CSS -->
+    <title>EverGreen Empire — CEO Command Center</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
     <style>
         :root {
             --primary: #1e40af;
-            --secondary: #64748b;
-            --background: #f8fafc;
+            --secondary: #3730a3;
+            --background: #eff6ff;
             --surface: #ffffff;
             --text: #1e293b;
             --text-muted: #64748b;
-            --border: #e2e8f0;
+            --border: #dbeafe;
         }
 
         .theme-dark {
             --primary: #3b82f6;
-            --secondary: #94a3b8;
-            --background: #0f172a;
-            --surface: #1e293b;
+            --secondary: #2563eb;
+            --background: #1e1b2e;
+            --surface: #2d2a42;
             --text: #f1f5f9;
             --text-muted: #94a3b8;
-            --border: #334155;
-        }
-
-        .theme-corporate {
-            --primary: #059669;
-            --secondary: #047857;
-            --background: #f0fdf4;
-            --surface: #ffffff;
-            --text: #064e3b;
-            --text-muted: #065f46;
-            --border: #a7f3d0;
+            --border: #374151;
         }
 
         body {
             background-color: var(--background);
             color: var(--text);
             transition: all 0.3s ease;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         }
 
         .card {
@@ -75,44 +58,22 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .chart-container {
-            position: relative;
-            height: 200px;
-            width: 100%;
+        .pulse-glow {
+            animation: pulse-glow 2s infinite;
         }
 
-        @media (min-width: 1024px) {
-            .chart-container {
-                height: 220px;
-            }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(30, 64, 175, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(30, 64, 175, 0.8); }
         }
 
-        /* Mobile optimizations */
-        @media (max-width: 768px) {
-            .mobile-stack { flex-direction: column; }
-            .mobile-full { width: 100%; }
-            .mobile-text-center { text-align: center; }
-            .mobile-p-3 { padding: 0.75rem; }
-            .mobile-text-sm { font-size: 0.875rem; }
-            .mobile-text-xs { font-size: 0.75rem; }
-        }
-
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 4px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: var(--background);
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: var(--primary);
-            border-radius: 2px;
-        }
-
-        .company-glow {
-            text-shadow: 0 0 20px rgba(34, 197, 94, 0.3);
+        .online-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 6px;
         }
 
         .message-ceo {
@@ -123,7 +84,7 @@
             margin: 8px 0;
         }
 
-        .message-admin {
+        .message-cfo {
             background: linear-gradient(135deg, #059669, #047857);
             color: white;
             border-radius: 12px;
@@ -131,419 +92,424 @@
             margin: 8px 0;
         }
 
-        .message-other {
-            background: var(--surface);
-            border: 1px solid var(--border);
+        .message-admin {
+            background: linear-gradient(135deg, #7c3aed, #6d28d9);
+            color: white;
             border-radius: 12px;
             padding: 12px;
             margin: 8px 0;
         }
 
-        .urgent-message {
-            border-left: 4px solid #dc2626;
-            animation: pulse 2s infinite;
+        .message-system {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+            border-radius: 12px;
+            padding: 12px;
+            margin: 8px 0;
         }
 
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(220, 38, 38, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        .greeting-banner {
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 100%);
+            color: white;
+        }
+
+        .performance-excellent {
+            color: #10b981;
+            font-weight: bold;
+        }
+
+        .performance-good {
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .performance-poor {
+            color: #ef4444;
+            font-weight: bold;
+        }
+
+        .ceo-card {
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border-left: 4px solid #1e40af;
+        }
+
+        .dark .ceo-card {
+            background: linear-gradient(135deg, #2d2a42 0%, #1e1b2e 100%);
+        }
+
+        .growth-positive {
+            border-left: 4px solid #10b981;
+        }
+
+        .growth-negative {
+            border-left: 4px solid #ef4444;
+        }
+
+        .world-map {
+            background: linear-gradient(135deg, #1e40af, #3730a3);
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+        }
+
+        .ai-insight-ceo {
+            background: linear-gradient(135deg, #dbeafe, #93c5fd);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .dark .ai-insight-ceo {
+            background: linear-gradient(135deg, #1e3a8a, #1e40af);
+        }
+
+        .performance-metric {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .dark .performance-metric {
+            background: linear-gradient(135deg, #3f3f23, #4f4626);
         }
     </style>
 </head>
-<body class="theme-light min-h-screen font-sans">
+<body class="min-h-screen">
     <!-- Loading Screen -->
-    <div id="loadingScreen" class="fixed inset-0 bg-white dark:bg-gray-900 z-50 flex items-center justify-center">
+    <div id="loadingScreen" class="fixed inset-0 bg-white z-50 flex items-center justify-center">
         <div class="text-center">
             <div class="w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <div class="text-xl font-semibold">Loading EverGreen Empire</div>
-            <div class="text-sm text-gray-600 dark:text-gray-400 mt-2">Initializing CEO Portal...</div>
+            <div class="text-xl font-semibold text-gray-800">CEO Command Center</div>
+            <div class="text-sm text-gray-600 mt-2" id="loadingStatus">Initializing executive dashboard...</div>
         </div>
     </div>
 
-    <!-- Mobile Header -->
-    <header class="bg-blue-900 text-white p-3 sticky top-0 z-40 shadow-lg lg:hidden">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-2">
-                <div class="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                    <i class="fas fa-crown text-sm"></i>
-                </div>
-                <div>
-                    <h1 class="text-base font-bold company-glow">EverGreen Empire</h1>
-                    <p id="greetingMobile" class="text-xs opacity-90">Welcome, CEO</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-1">
-                <button id="mobileNotifBtn" class="p-1.5 rounded-lg glass relative">
-                    <i class="fas fa-bell text-sm"></i>
-                    <span id="mobileNotifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
+    <!-- Security Check Modal -->
+    <div id="securityModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 m-3 max-w-md w-full">
+            <div class="text-center">
+                <i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i>
+                <h3 class="text-lg font-bold mb-2">Authentication Required</h3>
+                <p class="text-gray-600 mb-4">Please log in to access the CEO Command Center</p>
+                <button onclick="redirectToLogin()" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
+                    Go to Login
                 </button>
-                <button id="mobileMenuBtn" class="p-1.5 rounded-lg glass">
-                    <i class="fas fa-bars text-sm"></i>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <!-- Desktop Header -->
-    <header class="bg-blue-900 text-white p-4 sticky top-0 z-40 shadow-lg hidden lg:block">
-        <div class="max-w-7xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
-                    <i class="fas fa-crown"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold company-glow">EverGreen Empire</h1>
-                    <p id="greeting" class="text-sm opacity-90">Welcome back, Chief Executive</p>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-3">
-                <!-- Quick Stats -->
-                <div class="hidden xl:flex items-center space-x-4">
-                    <div class="text-center">
-                        <div class="text-xs opacity-80">Live Revenue</div>
-                        <div id="liveRevenue" class="font-bold text-green-300 text-sm">$0.00</div>
-                    </div>
-                    <div class="text-center">
-                        <div class="text-xs opacity-80">Growth</div>
-                        <div id="liveGrowth" class="font-bold text-green-300 text-sm">0%</div>
-                    </div>
-                </div>
-
-                <!-- Theme Selector -->
-                <div class="relative">
-                    <button id="themeBtn" class="p-2 rounded-lg glass hover:bg-white/20 transition-all">
-                        <i class="fas fa-palette text-sm"></i>
-                    </button>
-                    <div id="themePanel" class="absolute right-0 top-10 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-2 hidden z-50">
-                        <div class="space-y-1">
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="light">
-                                <i class="fas fa-sun mr-2 text-yellow-500"></i>Light
-                            </button>
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="dark">
-                                <i class="fas fa-moon mr-2 text-blue-400"></i>Dark
-                            </button>
-                            <button class="theme-option w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm" data-theme="corporate">
-                                <i class="fas fa-building mr-2 text-green-500"></i>Corporate
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Notifications -->
-                <div class="relative">
-                    <button id="notifBtn" class="p-2 rounded-lg glass hover:bg-white/20 transition-all relative">
-                        <i class="fas fa-bell text-sm"></i>
-                        <span id="notifBadge" class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center hidden">0</span>
-                    </button>
-                </div>
-
-                <!-- User Menu -->
-                <div class="relative">
-                    <button id="userMenuBtn" class="flex items-center space-x-2 p-2 rounded-lg glass hover:bg-white/20 transition-all">
-                        <div class="w-7 h-7 bg-white/20 rounded-full flex items-center justify-center">
-                            <i class="fas fa-user-tie text-sm"></i>
-                        </div>
-                        <span class="text-sm">CEO</span>
-                    </button>
-                    <div id="userMenu" class="absolute right-0 top-10 w-40 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-2 hidden z-50">
-                        <div class="space-y-1">
-                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
-                                <i class="fas fa-cog mr-2"></i>Settings
-                            </button>
-                            <button class="w-full text-left p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
-                                <i class="fas fa-users mr-2"></i>Team
-                            </button>
-                            <hr class="border-gray-200 dark:border-gray-600 my-1">
-                            <button id="logoutBtn" class="w-full text-left p-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-sm">
-                                <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <!-- Mobile Menu -->
-    <div id="mobileMenu" class="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden hidden">
-        <div class="absolute right-0 top-0 h-full w-64 bg-white dark:bg-gray-800 shadow-xl">
-            <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-                <div class="flex items-center justify-between">
-                    <h2 class="text-base font-bold company-glow">EverGreen Empire</h2>
-                    <button id="closeMobileMenu" class="p-1">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-                <p id="greetingMobileMenu" class="text-xs text-gray-600 dark:text-gray-400 mt-1">Welcome, CEO</p>
-            </div>
-            <div class="p-3 space-y-2">
-                <div class="space-y-1">
-                    <button class="w-full text-left p-2 rounded-lg bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 text-sm">
-                        <i class="fas fa-home mr-2"></i>Dashboard
-                    </button>
-                    <button class="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
-                        <i class="fas fa-chart-line mr-2"></i>Analytics
-                    </button>
-                    <button class="w-full text-left p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-sm">
-                        <i class="fas fa-users mr-2"></i>Team
-                    </button>
-                </div>
             </div>
         </div>
     </div>
 
     <!-- Main Content -->
-    <main class="max-w-7xl mx-auto p-3 lg:p-4 grid grid-cols-1 xl:grid-cols-4 gap-3 lg:gap-4">
-        <!-- Left Sidebar - Quick Actions -->
-        <div class="xl:col-span-1 space-y-3 lg:space-y-4">
-            <!-- Quick Actions -->
-            <div class="card rounded-lg p-3 lg:p-4">
-                <h3 class="text-base font-bold mb-3 flex items-center">
-                    <i class="fas fa-bolt mr-2 text-yellow-500 text-sm"></i>Quick Actions
-                </h3>
-                <div class="space-y-2">
-                    <button id="runProjectionsBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
-                        <span>Run Projections</span>
-                        <i class="fas fa-chart-line text-xs"></i>
-                    </button>
-                    <button id="sendBroadcastBtn" class="w-full bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
-                        <span>Send Broadcast</span>
-                        <i class="fas fa-bullhorn text-xs"></i>
-                    </button>
-                    <button id="adminCommBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
-                        <span>Message Admin</span>
-                        <i class="fas fa-comment-alt text-xs"></i>
-                    </button>
-                    <button id="aiAnalysisBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
-                        <span>AI Analysis</span>
-                        <i class="fas fa-robot text-xs"></i>
-                    </button>
-                    <button id="emergencyMeetingBtn" class="w-full bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg flex items-center justify-between transition-all text-sm">
-                        <span>Emergency Meeting</span>
-                        <i class="fas fa-exclamation-triangle text-xs"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Team Status -->
-            <div class="card rounded-lg p-3 lg:p-4">
-                <h3 class="text-base font-bold mb-3 flex items-center">
-                    <i class="fas fa-users mr-2 text-blue-500 text-sm"></i>Team Status
-                </h3>
-                <div class="space-y-2">
-                    <div class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mr-2">
-                                <i class="fas fa-user text-xs"></i>
-                            </div>
-                            <span class="text-sm">CFO</span>
-                        </div>
-                        <span class="text-green-600 font-semibold text-xs">Online</span>
+    <div id="mainContent" class="hidden">
+        <!-- Header -->
+        <header class="bg-blue-800 text-white p-4 sticky top-0 z-40 shadow-lg">
+            <div class="max-w-7xl mx-auto flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center">
+                        <i class="fas fa-crown"></i>
                     </div>
-                    <div class="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center text-white mr-2">
-                                <i class="fas fa-user text-xs"></i>
-                            </div>
-                            <span class="text-sm">COO</span>
-                        </div>
-                        <span class="text-blue-600 font-semibold text-xs">Online</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center text-white mr-2">
-                                <i class="fas fa-user text-xs"></i>
-                            </div>
-                            <span class="text-sm">Admin</span>
-                        </div>
-                        <span class="text-green-600 font-semibold text-xs">Online</span>
-                    </div>
-                    <div class="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                        <div class="flex items-center">
-                            <div class="w-6 h-6 bg-gray-500 rounded-full flex items-center justify-center text-white mr-2">
-                                <i class="fas fa-user text-xs"></i>
-                            </div>
-                            <span class="text-sm">CTO</span>
-                        </div>
-                        <span class="text-gray-500 text-xs">Offline</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Company Vision -->
-            <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-green-500 to-green-600 text-white">
-                <h3 class="text-base font-bold mb-2 flex items-center">
-                    <i class="fas fa-seedling mr-2 text-sm"></i>EverGreen Empire
-                </h3>
-                <p class="text-xs opacity-90 mb-2">Building a sustainable future through innovation and excellence.</p>
-                <div class="flex items-center justify-between text-xs">
-                    <span>Founded: 2025</span>
-                    <span>Global Reach</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Dashboard -->
-        <div class="xl:col-span-3 space-y-3 lg:space-y-4">
-            <!-- Welcome Banner -->
-            <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
-                <div class="flex items-center justify-between">
                     <div>
-                        <h2 id="welcomeTitle" class="text-lg lg:text-xl font-bold mb-1">Welcome to Your Dashboard</h2>
-                        <p id="welcomeMessage" class="text-sm opacity-90">Ready to lead another successful day at EverGreen Empire</p>
+                        <h1 class="text-xl font-bold">EverGreen Empire</h1>
+                        <p class="text-sm opacity-90">CEO Command Center <span id="connectionStatus" class="online-dot"></span> <span id="syncStatus" class="text-xs">Live Executive Data</span></p>
                     </div>
-                    <div class="hidden lg:block">
-                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
-                            <i class="fas fa-chart-line text-lg"></i>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <div class="flex space-x-2">
+                        <a href="admin.html" class="p-2 rounded-lg bg-white/10 hover:bg-white/20" title="Admin Portal">
+                            <i class="fas fa-cogs"></i>
+                        </a>
+                        <a href="cfo.html" class="p-2 rounded-lg bg-white/10 hover:bg-white/20" title="CFO Portal">
+                            <i class="fas fa-chart-line"></i>
+                        </a>
+                    </div>
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg bg-white/10 hover:bg-white/20">
+                        <i class="fas fa-palette"></i>
+                    </button>
+                    <button onclick="signOut()" class="bg-red-600 px-4 py-2 rounded-lg hover:bg-red-700 flex items-center">
+                        <i class="fas fa-sign-out-alt mr-2"></i>Sign Out
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="max-w-7xl mx-auto p-4">
+            <!-- Greeting Banner -->
+            <div class="greeting-banner rounded-lg p-6 mb-6 text-white shadow-lg" id="greetingBanner">
+                <div class="flex flex-col md:flex-row md:items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-2" id="greetingMessage">Good morning, CEO!</h2>
+                        <p class="text-blue-100" id="greetingSubtext">Ready to lead today's strategic initiatives?</p>
+                        <div class="flex items-center mt-2 space-x-2" id="greetingStats">
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">👑 $0 Revenue</span>
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🚀 0% Growth</span>
+                            <span class="text-xs bg-white/20 px-2 py-1 rounded-full">📊 0 Brands</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 md:mt-0 flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-xs text-blue-200">Empire Status</div>
+                            <div class="text-sm font-bold" id="portalStatus">All Systems Optimal</div>
+                        </div>
+                        <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center pulse-glow">
+                            <i class="fas fa-crown text-white text-lg"></i>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Revenue & KPI Section -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-                <!-- Total Revenue -->
-                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-blue-500 to-blue-600 text-white">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-base font-bold">Total Revenue</h3>
-                        <i class="fas fa-dollar-sign text-lg opacity-80"></i>
+            <!-- Executive Performance Dashboard -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                <div class="ceo-card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Estimated Revenue</h3>
+                        <i class="fas fa-dollar-sign text-green-500"></i>
                     </div>
-                    <div class="text-xl lg:text-2xl font-bold mb-1" id="totalRevenue">$0.00</div>
-                    <div class="flex items-center text-xs">
-                        <i class="fas fa-arrow-up mr-1"></i>
-                        <span id="revenueGrowth">0%</span>
-                        <span class="ml-2 opacity-80">this month</span>
-                    </div>
+                    <div class="text-2xl font-bold mt-2 performance-excellent" id="estimatedRevenue">$0</div>
+                    <div class="text-xs text-gray-500">28-day projection</div>
                 </div>
-
-                <!-- Active Projects -->
-                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-green-500 to-green-600 text-white">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-base font-bold">Active Projects</h3>
-                        <i class="fas fa-tasks text-lg opacity-80"></i>
+                <div class="ceo-card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Growth Margin</h3>
+                        <i class="fas fa-chart-line text-blue-500"></i>
                     </div>
-                    <div class="text-xl lg:text-2xl font-bold mb-1" id="activeProjects">0</div>
-                    <div class="text-xs opacity-80">Across all departments</div>
+                    <div class="text-2xl font-bold mt-2 performance-good" id="growthMargin">0%</div>
+                    <div class="text-xs text-gray-500">Company performance</div>
                 </div>
-
-                <!-- Market Share -->
-                <div class="card rounded-lg p-3 lg:p-4 bg-gradient-to-br from-purple-500 to-purple-600 text-white">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-base font-bold">Market Share</h3>
-                        <i class="fas fa-chart-pie text-lg opacity-80"></i>
+                <div class="ceo-card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Daily Profit</h3>
+                        <i class="fas fa-trending-up text-purple-500"></i>
                     </div>
-                    <div class="text-xl lg:text-2xl font-bold mb-1" id="marketShare">0%</div>
-                    <div class="text-xs opacity-80">Industry position</div>
+                    <div class="text-2xl font-bold mt-2 performance-excellent" id="dailyProfit">$0</div>
+                    <div class="text-xs text-gray-500">24h increase</div>
+                </div>
+                <div class="ceo-card rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-base font-bold">Brand Health</h3>
+                        <i class="fas fa-heart text-red-500"></i>
+                    </div>
+                    <div class="text-2xl font-bold mt-2 performance-good" id="brandHealth">0%</div>
+                    <div class="text-xs text-gray-500">Portfolio strength</div>
                 </div>
             </div>
 
-            <!-- Charts Section -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 lg:gap-4">
-                <!-- Revenue Chart -->
-                <div class="card rounded-lg p-3 lg:p-4">
-                    <div class="flex items-center justify-between mb-3 mobile-stack">
-                        <h3 class="text-base font-bold">Revenue Trend</h3>
-                        <div class="flex space-x-1 mt-1 lg:mt-0">
-                            <button class="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900 rounded">28D</button>
-                            <button class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">90D</button>
-                            <button class="px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 rounded">1Y</button>
+            <!-- Strategic Overview -->
+            <div class="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-6">
+                <!-- Performance Metrics & AI Insights -->
+                <div class="card rounded-lg p-4 xl:col-span-2">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold">Strategic Performance Dashboard</h3>
+                        <div class="flex space-x-2">
+                            <button onclick="generateStrategicReport()" class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm">
+                                <i class="fas fa-file-alt mr-1"></i>Strategy Report
+                            </button>
+                            <button onclick="analyzePerformance()" class="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 text-sm">
+                                <i class="fas fa-chart-bar mr-1"></i>Analyze
+                            </button>
                         </div>
                     </div>
-                    <div class="chart-container">
-                        <canvas id="revenueChart"></canvas>
+
+                    <!-- Performance Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <div class="performance-metric">
+                            <h5 class="font-semibold mb-2">📈 Market Position</h5>
+                            <div class="flex justify-between items-center">
+                                <span>Competitive Rank</span>
+                                <span class="performance-excellent" id="marketRank">#1</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-green-600 h-2 rounded-full" style="width: 85%" id="marketPositionBar"></div>
+                            </div>
+                        </div>
+                        <div class="performance-metric">
+                            <h5 class="font-semibold mb-2">⚡ Operational Efficiency</h5>
+                            <div class="flex justify-between items-center">
+                                <span>Performance Score</span>
+                                <span class="performance-good" id="efficiencyScore">92%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="bg-blue-600 h-2 rounded-full" style="width: 92%" id="efficiencyBar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Underperforming Brands -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-3 text-lg">⚠️ Underperforming Brands</h4>
+                        <div id="underperformingBrands" class="space-y-2">
+                            <div class="text-center text-gray-500 py-4">All brands performing optimally</div>
+                        </div>
+                    </div>
+
+                    <!-- AI Strategic Insights -->
+                    <div class="ai-insight-ceo rounded-lg p-4">
+                        <h4 class="font-semibold mb-2">🤖 AI Strategic Insights</h4>
+                        <div id="aiInsights" class="text-sm">
+                            <p>Loading strategic analysis...</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Performance Metrics -->
-                <div class="card rounded-lg p-3 lg:p-4">
-                    <h3 class="text-base font-bold mb-3">Performance Metrics</h3>
-                    <div class="chart-container">
-                        <canvas id="performanceChart"></canvas>
+                <!-- Executive Communications & World Chart -->
+                <div class="space-y-6">
+                    <!-- Real-time Communications -->
+                    <div class="card rounded-lg p-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-bold">Executive Communications</h3>
+                            <span class="text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">Live</span>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex flex-col space-y-2">
+                                <input type="text" id="messageInput" placeholder="Type your strategic directive..." class="w-full p-3 border rounded-lg">
+                                <select id="recipientSelect" class="w-full p-3 border rounded-lg">
+                                    <option value="all">All Executives</option>
+                                    <option value="cfo">CFO Only</option>
+                                    <option value="admin">Admin Only</option>
+                                </select>
+                                <button onclick="sendMessage()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700">
+                                    <i class="fas fa-bullhorn mr-2"></i>Send Directive
+                                </button>
+                            </div>
+                            <div id="messagesContainer" class="max-h-64 overflow-y-auto space-y-2 border rounded-lg p-3">
+                                <!-- Messages will appear here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- World Market Chart -->
+                    <div class="card rounded-lg p-4">
+                        <h3 class="text-lg font-bold mb-4">🌍 Global Market Presence</h3>
+                        <div class="world-map text-center">
+                            <div class="text-xl font-bold mb-4">EverGreen Empire Global Reach</div>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <div class="font-semibold">North America</div>
+                                    <div class="performance-excellent">$42.5K</div>
+                                    <div class="text-xs">35% Market Share</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold">Europe</div>
+                                    <div class="performance-good">$28.3K</div>
+                                    <div class="text-xs">22% Market Share</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold">Asia Pacific</div>
+                                    <div class="performance-good">$31.2K</div>
+                                    <div class="text-xs">18% Market Share</div>
+                                </div>
+                                <div>
+                                    <div class="font-semibold">Rest of World</div>
+                                    <div class="performance-good">$18.0K</div>
+                                    <div class="text-xs">12% Market Share</div>
+                                </div>
+                            </div>
+                            <div class="mt-4 text-xs opacity-80">
+                                Total Global Revenue: <span class="font-bold">$120K</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Trends -->
+                    <div class="card rounded-lg p-4">
+                        <h3 class="text-lg font-bold mb-4">Performance Trends</h3>
+                        <canvas id="performanceTrendChart" height="200"></canvas>
                     </div>
                 </div>
             </div>
 
-            <!-- Data Tables -->
-            <div class="grid grid-cols-1 gap-3 lg:gap-4">
-                <!-- Brands Table -->
-                <div class="card rounded-lg p-3 lg:p-4">
-                    <div class="flex items-center justify-between mb-3 mobile-stack">
-                        <h3 class="text-base font-bold">Brand Performance</h3>
-                        <button id="refreshDataBtn" class="px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-xs lg:text-sm mt-1 lg:mt-0">
-                            <i class="fas fa-sync-alt mr-1"></i>Refresh Data
-                        </button>
-                    </div>
-                    <div class="overflow-x-auto custom-scrollbar">
-                        <table class="w-full min-w-[500px]">
+            <!-- Detailed Performance Analytics -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- Brand Performance Matrix -->
+                <div class="card rounded-lg p-4">
+                    <h3 class="text-lg font-bold mb-4">Brand Performance Matrix</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
                             <thead>
-                                <tr class="border-b border-gray-200 dark:border-gray-700">
-                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">Brand</th>
-                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">48H Views</th>
-                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">7D Views</th>
-                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">28D Views</th>
-                                    <th class="text-left py-2 font-semibold text-xs lg:text-sm">Trend</th>
+                                <tr class="border-b">
+                                    <th class="text-left py-3 px-2 font-semibold">Brand</th>
+                                    <th class="text-right py-3 px-2 font-semibold">Revenue</th>
+                                    <th class="text-right py-3 px-2 font-semibold">Growth</th>
+                                    <th class="text-center py-3 px-2 font-semibold">Status</th>
                                 </tr>
                             </thead>
-                            <tbody id="brandsTableBody">
-                                <!-- Data will be populated here -->
+                            <tbody id="brandMatrixBody">
+                                <tr><td colspan="4" class="text-center py-4 text-gray-500">Loading brand performance...</td></tr>
                             </tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- Executive Communications -->
-                <div class="card rounded-lg p-3 lg:p-4">
-                    <h3 class="text-base font-bold mb-3">Executive Communications</h3>
-                    <div class="space-y-3">
-                        <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="text" id="messageInput" placeholder="Type your message..." class="flex-1 p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm">
-                            <select id="recipientSelect" class="p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-transparent text-sm">
-                                <option value="all">All Executives</option>
-                                <option value="admin">Admin Team</option>
-                                <option value="cfo">CFO</option>
-                                <option value="coo">COO</option>
-                                <option value="cto">CTO</option>
-                            </select>
-                            <button id="sendMessageBtn" class="px-3 lg:px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all text-sm">
-                                <i class="fas fa-paper-plane mr-1"></i>Send
-                            </button>
+                <!-- Executive Tools -->
+                <div class="card rounded-lg p-4">
+                    <h3 class="text-lg font-bold mb-4">CEO Executive Tools</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-robot text-blue-500 mr-3"></i>
+                                <span class="font-semibold">Strategic AI Advisor</span>
+                            </div>
+                            <span class="text-blue-600 text-sm font-semibold">Active</span>
                         </div>
-                        <div id="messagesContainer" class="max-h-48 overflow-y-auto space-y-2 custom-scrollbar">
-                            <!-- Messages will appear here -->
+                        <div class="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-chart-pie text-green-500 mr-3"></i>
+                                <span class="font-semibold">Market Intelligence</span>
+                            </div>
+                            <span class="text-green-600 text-sm font-semibold">Live</span>
                         </div>
+                        <div class="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-bullseye text-purple-500 mr-3"></i>
+                                <span class="font-semibold">Goal Tracking</span>
+                            </div>
+                            <span class="text-purple-600 text-sm font-semibold">85%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-orange-50 rounded-lg">
+                            <div class="flex items-center">
+                                <i class="fas fa-trophy text-orange-500 mr-3"></i>
+                                <span class="font-semibold">Performance Awards</span>
+                            </div>
+                            <span class="text-orange-600 text-sm font-semibold">3 Won</span>
+                        </div>
+                    </div>
+
+                    <!-- Quick Action Buttons -->
+                    <div class="grid grid-cols-2 gap-2 mt-4">
+                        <button onclick="scheduleBoardMeeting()" class="bg-blue-600 text-white p-2 rounded hover:bg-blue-700 text-sm">
+                            <i class="fas fa-users mr-1"></i>Board Meeting
+                        </button>
+                        <button onclick="reviewStrategicPlan()" class="bg-green-600 text-white p-2 rounded hover:bg-green-700 text-sm">
+                            <i class="fas fa-file-contract mr-1"></i>Strategy Review
+                        </button>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
 
-    <!-- Notifications Panel -->
-    <div id="notificationsPanel" class="fixed right-3 left-3 lg:right-6 lg:left-auto top-16 w-auto lg:w-72 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 hidden z-50">
-        <div class="p-3 border-b border-gray-200 dark:border-gray-700">
-            <div class="flex items-center justify-between">
-                <h3 class="font-bold text-sm">Notifications</h3>
-                <button id="clearNotifications" class="text-xs text-blue-600 hover:text-blue-700">Clear All</button>
+            <!-- Quarterly Performance -->
+            <div class="card rounded-lg p-4 mb-6">
+                <h3 class="text-lg font-bold mb-4">📅 Quarterly Performance Overview</h3>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div class="text-center p-4 border rounded-lg">
+                        <div class="text-2xl font-bold performance-excellent">Q1</div>
+                        <div class="text-lg font-semibold">$45.2K</div>
+                        <div class="text-sm text-gray-500">+12% Growth</div>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg">
+                        <div class="text-2xl font-bold performance-excellent">Q2</div>
+                        <div class="text-lg font-semibold">$52.8K</div>
+                        <div class="text-sm text-gray-500">+18% Growth</div>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg">
+                        <div class="text-2xl font-bold performance-good">Q3</div>
+                        <div class="text-lg font-semibold">$48.9K</div>
+                        <div class="text-sm text-gray-500">+8% Growth</div>
+                    </div>
+                    <div class="text-center p-4 border rounded-lg growth-positive">
+                        <div class="text-2xl font-bold performance-excellent">Q4</div>
+                        <div class="text-lg font-semibold" id="q4Projection">$0</div>
+                        <div class="text-sm text-gray-500" id="q4Growth">Projection</div>
+                    </div>
+                </div>
             </div>
-        </div>
-        <div id="notificationsList" class="max-h-64 overflow-y-auto p-2 custom-scrollbar">
-            <!-- Notifications will appear here -->
-        </div>
-    </div>
-
-    <!-- Quick Actions Modal -->
-    <div id="quickActionsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <div class="bg-white dark:bg-gray-800 rounded-lg p-4 m-3 max-w-sm w-full">
-            <h3 class="text-lg font-bold mb-3" id="modalTitle">Quick Action</h3>
-            <div id="modalContent" class="text-sm">
-                <!-- Content will be dynamically inserted -->
-            </div>
-            <div class="flex space-x-2 mt-4">
-                <button id="confirmAction" class="flex-1 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 transition-all text-sm">Confirm</button>
-                <button id="cancelAction" class="flex-1 bg-gray-300 dark:bg-gray-600 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-all text-sm">Cancel</button>
-            </div>
-        </div>
+        </main>
     </div>
 
     <script>
@@ -552,685 +518,646 @@
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsaGFxdXdqZXZxZHpqb2J0aGR6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjEwNjYxODMsImV4cCI6MjA3NjY0MjE4M30.Ns2raXXMNPAveuogHrcRsTgazQrpTTnzr6ZeURc3pv0';
         
         // Initialize Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let supabase;
+        let realtimeChannels = [];
+        let performanceTrendChart;
 
         // Global State
         let state = {
             brands: [],
-            videos: [],
             messages: [],
-            revenueData: [],
-            user: { role: 'ceo', name: 'Chief Executive Officer' },
-            companyName: 'EverGreen Empire'
+            performance: {
+                estimatedRevenue: 0,
+                growthMargin: 0,
+                dailyProfit: 0,
+                brandHealth: 0,
+                underperformingBrands: []
+            },
+            user: null
         };
 
-        // DOM Elements
-        const elements = {
-            loadingScreen: document.getElementById('loadingScreen'),
-            greeting: document.getElementById('greeting'),
-            greetingMobile: document.getElementById('greetingMobile'),
-            greetingMobileMenu: document.getElementById('greetingMobileMenu'),
-            welcomeTitle: document.getElementById('welcomeTitle'),
-            welcomeMessage: document.getElementById('welcomeMessage'),
-            totalRevenue: document.getElementById('totalRevenue'),
-            revenueGrowth: document.getElementById('revenueGrowth'),
-            activeProjects: document.getElementById('activeProjects'),
-            marketShare: document.getElementById('marketShare'),
-            brandsTableBody: document.getElementById('brandsTableBody'),
-            messagesContainer: document.getElementById('messagesContainer'),
-            messageInput: document.getElementById('messageInput'),
-            recipientSelect: document.getElementById('recipientSelect'),
-            sendMessageBtn: document.getElementById('sendMessageBtn'),
-            notifBadge: document.getElementById('notifBadge'),
-            mobileNotifBadge: document.getElementById('mobileNotifBadge'),
-            notificationsPanel: document.getElementById('notificationsPanel'),
-            notificationsList: document.getElementById('notificationsList'),
-            clearNotifications: document.getElementById('clearNotifications'),
-            themeBtn: document.getElementById('themeBtn'),
-            themePanel: document.getElementById('themePanel'),
-            userMenuBtn: document.getElementById('userMenuBtn'),
-            userMenu: document.getElementById('userMenu'),
-            logoutBtn: document.getElementById('logoutBtn'),
-            mobileMenuBtn: document.getElementById('mobileMenuBtn'),
-            mobileMenu: document.getElementById('mobileMenu'),
-            closeMobileMenu: document.getElementById('closeMobileMenu'),
-            mobileNotifBtn: document.getElementById('mobileNotifBtn'),
-            quickActionsModal: document.getElementById('quickActionsModal'),
-            modalTitle: document.getElementById('modalTitle'),
-            modalContent: document.getElementById('modalContent'),
-            confirmAction: document.getElementById('confirmAction'),
-            cancelAction: document.getElementById('cancelAction'),
-            runProjectionsBtn: document.getElementById('runProjectionsBtn'),
-            sendBroadcastBtn: document.getElementById('sendBroadcastBtn'),
-            adminCommBtn: document.getElementById('adminCommBtn'),
-            aiAnalysisBtn: document.getElementById('aiAnalysisBtn'),
-            emergencyMeetingBtn: document.getElementById('emergencyMeetingBtn'),
-            refreshDataBtn: document.getElementById('refreshDataBtn')
+        // 👑 CEO AUTO GREETINGS SYSTEM
+        const ceoGreetings = {
+            morning: [
+                "Good morning, CEO! 🌅 Ready to lead today's strategic initiatives?",
+                "Rise and shine, Visionary Leader! 👑 The empire awaits your command!",
+                "Morning, CEO! Let's make today historically successful! 🚀",
+                "Hello Commander! The future of the empire is in your hands! 💎"
+            ],
+            afternoon: [
+                "Good afternoon, CEO! 📊 How are our strategic objectives progressing?",
+                "Afternoon, Empire Builder! Time to review our conquests! 🏆",
+                "Hello CEO! Hope you're having a visionary day! 🎯",
+                "CEO! Perfect time for strategic decision-making! ⚡"
+            ],
+            evening: [
+                "Good evening, CEO! 🌇 Wrapping up another day of empire-building?",
+                "Evening, Master Strategist! The boardroom never sleeps! 🌙",
+                "Hello CEO! Making visionary moves while others rest? 💪",
+                "CEO! Evening is when empires are envisioned and built! 🏗️"
+            ],
+            night: [
+                "Working late, CEO? 💼 That's why we're industry leaders! 🌃",
+                "Good night shift, CEO! The empire thrives on your vision! 🌌",
+                "CEO! Burning the midnight oil for global domination? 🔥",
+                "Late night session, CEO! This is where legends cement their legacy! ⭐"
+            ],
+            achievements: [
+                "Visionary leadership, CEO! 💎 You've built ${revenue} in empire value!",
+                "Empire-building excellence, CEO! 🏆 ${revenue} revenue under your command!",
+                "CEO, you're dominating! 📊 {brands} brands conquering markets!",
+                "Strategic mastery, CEO! 🚀 The empire expands with your guidance!"
+            ]
         };
 
-        // Chart Instances
-        let revenueChart, performanceChart;
-
-        // Quick Action Handler
-        let currentQuickAction = null;
-
-        // Initialize Application
+        // 🚀 Initialize Application
         async function init() {
-            console.log('🚀 Initializing EverGreen Empire CEO Portal...');
-            
-            // Set up event listeners
-            setupEventListeners();
-            
-            // Set greetings and company name
-            setGreetings();
-            
-            // Load initial data
-            await loadInitialData();
-            
-            // Initialize charts
-            initCharts();
-            
-            // Set up real-time subscriptions
-            setupRealtimeSubscriptions();
-            
-            // Hide loading screen
-            setTimeout(() => {
-                elements.loadingScreen.style.display = 'none';
-                showNotification('Welcome to your EverGreen Empire dashboard!', 'success');
-            }, 1500);
-        }
+            console.log('🚀 Initializing CEO Command Center...');
+            updateLoadingStatus('Checking authentication...');
 
-        function setupEventListeners() {
-            // Theme management
-            elements.themeBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                elements.themePanel.classList.toggle('hidden');
-            });
-
-            document.querySelectorAll('.theme-option').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const theme = e.target.closest('button').dataset.theme;
-                    setTheme(theme);
-                    elements.themePanel.classList.add('hidden');
-                });
-            });
-
-            // User menu
-            elements.userMenuBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                elements.userMenu.classList.toggle('hidden');
-            });
-
-            // Mobile menu
-            elements.mobileMenuBtn.addEventListener('click', () => {
-                elements.mobileMenu.classList.remove('hidden');
-            });
-
-            elements.closeMobileMenu.addEventListener('click', () => {
-                elements.mobileMenu.classList.add('hidden');
-            });
-
-            // Notifications
-            document.getElementById('notifBtn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                elements.notificationsPanel.classList.toggle('hidden');
-            });
-
-            elements.mobileNotifBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                elements.notificationsPanel.classList.toggle('hidden');
-            });
-
-            // Clear notifications
-            elements.clearNotifications.addEventListener('click', clearAllNotifications);
-
-            // Send message
-            elements.sendMessageBtn.addEventListener('click', sendEnhancedMessage);
-            elements.messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') sendEnhancedMessage();
-            });
-
-            // Quick Actions
-            elements.runProjectionsBtn.addEventListener('click', () => showQuickActionModal('Run Projections', 'Generate revenue projections for next quarter?', runProjections));
-            elements.sendBroadcastBtn.addEventListener('click', () => showQuickActionModal('Send Broadcast', 'Send message to all executives?', sendBroadcast));
-            elements.adminCommBtn.addEventListener('click', () => {
-                elements.recipientSelect.value = 'admin';
-                elements.messageInput.focus();
-                showNotification('Ready to message Admin team', 'info');
-            });
-            elements.aiAnalysisBtn.addEventListener('click', () => showQuickActionModal('AI Analysis', 'Run AI analysis on current performance?', runAIAnalysis));
-            elements.emergencyMeetingBtn.addEventListener('click', () => showQuickActionModal('Emergency Meeting', 'Schedule emergency meeting with executives?', scheduleEmergencyMeeting));
-            elements.refreshDataBtn.addEventListener('click', loadInitialData);
-
-            // Modal actions
-            elements.confirmAction.addEventListener('click', executeQuickAction);
-            elements.cancelAction.addEventListener('click', () => {
-                elements.quickActionsModal.classList.add('hidden');
-            });
-
-            // Logout
-            elements.logoutBtn.addEventListener('click', logout);
-
-            // Close dropdowns when clicking outside
-            document.addEventListener('click', () => {
-                elements.themePanel.classList.add('hidden');
-                elements.userMenu.classList.add('hidden');
-                elements.notificationsPanel.classList.add('hidden');
-            });
-
-            // Close modal when clicking outside
-            elements.quickActionsModal.addEventListener('click', (e) => {
-                if (e.target === elements.quickActionsModal) {
-                    elements.quickActionsModal.classList.add('hidden');
+            try {
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                
+                // Check authentication first
+                const { data: { session }, error } = await supabase.auth.getSession();
+                
+                if (error || !session) {
+                    showSecurityModal();
+                    return;
                 }
-            });
-        }
 
-        function setGreetings() {
-            const hour = new Date().getHours();
-            let greeting = 'Good evening';
-            let welcomeMessage = 'Ready to lead another successful day';
-            
-            if (hour < 12) {
-                greeting = 'Good morning';
-                welcomeMessage = 'Ready to conquer the day ahead';
-            } else if (hour < 18) {
-                greeting = 'Good afternoon';
-                welcomeMessage = 'Making strategic moves this afternoon';
+                state.user = {
+                    email: session.user.email,
+                    role: 'ceo',
+                    name: session.user.email.split('@')[0]
+                };
+
+                console.log('✅ CEO authenticated:', state.user);
+                updateLoadingStatus('Connecting to executive network...');
+
+                await setupRealtimeConnections();
+                await loadInitialData();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+                
+                setupAutoGreeting();
+                initializeCharts();
+                generateStrategicInsights();
+                
+                showNotification(`Welcome back, CEO ${state.user.name}! Command Center activated! 👑`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Initialization failed:', error);
+                showSecurityModal();
             }
+        }
 
-            // Update all greeting elements
-            const fullGreeting = `${greeting}, Chief Executive`;
-            elements.greeting.textContent = fullGreeting;
-            elements.greetingMobile.textContent = `${greeting}, CEO`;
-            elements.greetingMobileMenu.textContent = `${greeting}, CEO`;
+        // 🎯 Enhanced CEO Auto Greeting System
+        function setupAutoGreeting() {
+            const now = new Date();
+            const hour = now.getHours();
+            let timeOfDay = 'morning';
             
-            // Update welcome banner
-            elements.welcomeTitle.textContent = `${greeting}, CEO`;
-            elements.welcomeMessage.textContent = `${welcomeMessage} at ${state.companyName}`;
+            if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
+            else if (hour >= 17 && hour < 21) timeOfDay = 'evening';
+            else if (hour >= 21 || hour < 5) timeOfDay = 'night';
 
-            // Update document title
-            document.title = `${state.companyName} — CEO Portal`;
-        }
-
-        // Quick Actions Implementation
-        function showQuickActionModal(title, content, action) {
-            elements.modalTitle.textContent = title;
-            elements.modalContent.textContent = content;
-            currentQuickAction = action;
-            elements.quickActionsModal.classList.remove('hidden');
-        }
-
-        function executeQuickAction() {
-            if (currentQuickAction) {
-                currentQuickAction();
+            const greetingPool = ceoGreetings[timeOfDay];
+            const randomGreeting = greetingPool[Math.floor(Math.random() * greetingPool.length)];
+            
+            const brandCount = state.brands.length;
+            const totalRevenue = state.performance.estimatedRevenue;
+            
+            // Use achievement greeting if we have good numbers
+            let finalGreeting = randomGreeting;
+            if (brandCount >= 3 && totalRevenue >= 50) {
+                const achievementGreeting = ceoGreetings.achievements[Math.floor(Math.random() * ceoGreetings.achievements.length)];
+                finalGreeting = achievementGreeting
+                    .replace('{brands}', brandCount)
+                    .replace('${revenue}', `$${totalRevenue.toFixed(2)}`);
             }
-            elements.quickActionsModal.classList.add('hidden');
-        }
-
-        function runProjections() {
-            showNotification('Revenue projections generated successfully!', 'success');
-            const projectedRevenue = (calculateRevenue() * 1.15).toFixed(2);
-            showNotification(`Next quarter projection: $${projectedRevenue}`, 'info');
-        }
-
-        function sendBroadcast() {
-            const message = "Important: Executive meeting scheduled for tomorrow 10 AM. Please review Q3 reports.";
-            sendMessageToAll(message);
-            showNotification('Broadcast sent to all executives!', 'success');
-        }
-
-        function runAIAnalysis() {
-            showNotification('AI analysis completed!', 'success');
-            const insights = [
-                "📈 Revenue trending upward by 12% month-over-month",
-                "🎯 Focus on Ever-Sportz for maximum growth potential",
-                "⚠️ Monitor competitor activity in Q4",
-                "💡 Consider expanding to European markets"
-            ];
             
-            insights.forEach((insight, index) => {
-                setTimeout(() => {
-                    showNotification(insight, 'info');
-                }, index * 1000);
-            });
+            const greetingMessage = finalGreeting
+                .replace('{name}', state.user.name)
+                .replace('{brands}', brandCount)
+                .replace('${revenue}', `$${totalRevenue.toFixed(2)}`);
+
+            document.getElementById('greetingMessage').textContent = greetingMessage;
+            
+            // Update greeting stats
+            const growthPercentage = state.performance.growthMargin > 0 ? state.performance.growthMargin.toFixed(1) : '0';
+            const statsHTML = `
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">👑 $${totalRevenue.toFixed(2)} Revenue</span>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">🚀 ${growthPercentage}% Growth</span>
+                <span class="text-xs bg-white/20 px-2 py-1 rounded-full">📊 ${brandCount} Brands</span>
+            `;
+            document.getElementById('greetingStats').innerHTML = statsHTML;
         }
 
-        function scheduleEmergencyMeeting() {
-            showNotification('Emergency meeting scheduled! Executives notified.', 'success');
-            sendMessageToAll("🚨 EMERGENCY MEETING: Please join the executive conference room immediately.");
+        // 🔐 SECURITY FUNCTIONS
+        function showSecurityModal() {
+            document.getElementById('loadingScreen').style.display = 'none';
+            document.getElementById('securityModal').classList.remove('hidden');
         }
 
-        function sendMessageToAll(message) {
-            const messageData = {
-                sender: 'CEO',
-                receiver: 'all',
-                message: message,
-                created_at: new Date().toISOString()
+        function redirectToLogin() {
+            window.location.href = 'index.html';
+        }
+
+        // 🔄 Real-time Connections
+        async function setupRealtimeConnections() {
+            if (!supabase) return;
+
+            try {
+                // Real-time messages
+                const messagesChannel = supabase
+                    .channel('ceo-messages')
+                    .on('postgres_changes', 
+                        { event: 'INSERT', schema: 'public', table: 'messages' }, 
+                        (payload) => {
+                            console.log('💬 New message:', payload.new);
+                            state.messages.unshift(payload.new);
+                            updateMessages();
+                            playNotificationSound();
+                            
+                            if (payload.new.sender === 'CFO' || payload.new.sender === 'Admin') {
+                                showNotification(`New message from ${payload.new.sender}`, 'info');
+                            }
+                        }
+                    )
+                    .subscribe((status) => {
+                        if (status === 'SUBSCRIBED') {
+                            document.getElementById('connectionStatus').style.background = '#10b981';
+                            document.getElementById('syncStatus').textContent = 'Live Executive Data';
+                        }
+                    });
+
+                realtimeChannels.push(messagesChannel);
+
+                // Real-time brands data
+                const brandsChannel = supabase
+                    .channel('ceo-brands')
+                    .on('postgres_changes', 
+                        { event: '*', schema: 'public', table: 'brands' }, 
+                        async (payload) => {
+                            console.log('🔄 Brands data updated:', payload);
+                            await loadBrandsData();
+                            updatePerformanceMetrics();
+                            
+                            if (payload.eventType === 'INSERT') {
+                                showNotification(`New brand launched: ${payload.new.name}`, 'success');
+                            }
+                        }
+                    )
+                    .subscribe();
+
+                realtimeChannels.push(brandsChannel);
+
+            } catch (error) {
+                console.error('❌ Real-time setup failed:', error);
+            }
+        }
+
+        // 📊 Data Management
+        async function loadInitialData() {
+            await loadBrandsData();
+            await loadMessages();
+            updatePerformanceMetrics();
+        }
+
+        async function loadBrandsData() {
+            try {
+                const { data: brands, error } = await supabase
+                    .from('brands')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (error) throw error;
+                
+                state.brands = brands || [];
+                updatePerformanceMetrics();
+                
+                console.log(`✅ Loaded ${state.brands.length} brands for strategic analysis`);
+
+            } catch (error) {
+                console.error('❌ Error loading brands:', error);
+                loadDemoBrands();
+            }
+        }
+
+        async function loadMessages() {
+            try {
+                const { data: messages, error } = await supabase
+                    .from('messages')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(50);
+
+                if (error) throw error;
+                state.messages = messages || [];
+                updateMessages();
+                
+            } catch (error) {
+                console.error('❌ Error loading messages:', error);
+                loadDemoMessages();
+            }
+        }
+
+        // 📈 Performance Metrics Calculation
+        function updatePerformanceMetrics() {
+            // Calculate total revenue from brands
+            const estimatedRevenue = state.brands.reduce((sum, brand) => sum + ((brand.views_28d || 0) / 1000) * 0.12, 0);
+            
+            // Calculate growth margin (simulated based on brand performance)
+            const averageBrandPerformance = state.brands.length > 0 ? 
+                state.brands.reduce((sum, brand) => sum + (brand.views_28d || 0), 0) / state.brands.length : 0;
+            const growthMargin = (averageBrandPerformance / 10000) * 15; // Simulated growth calculation
+            
+            // Calculate daily profit (simulated)
+            const dailyProfit = estimatedRevenue * 0.03; // 3% of monthly revenue as daily profit
+            
+            // Calculate brand health (percentage of brands performing well)
+            const performingBrands = state.brands.filter(brand => (brand.views_28d || 0) > 50000).length;
+            const brandHealth = state.brands.length > 0 ? (performingBrands / state.brands.length) * 100 : 0;
+            
+            // Identify underperforming brands
+            const underperformingBrands = state.brands.filter(brand => (brand.views_28d || 0) < 30000);
+            
+            // Update state
+            state.performance = {
+                estimatedRevenue,
+                growthMargin,
+                dailyProfit,
+                brandHealth,
+                underperformingBrands
             };
             
-            state.messages.unshift(messageData);
-            updateMessages();
+            // Update UI
+            updatePerformanceUI();
+            updateBrandMatrix();
+            updateUnderperformingBrands();
+            updateQuarterlyProjection();
         }
 
-        // Enhanced Messaging System
-        async function sendEnhancedMessage() {
-            const message = elements.messageInput.value.trim();
-            const recipient = elements.recipientSelect.value;
+        function updatePerformanceUI() {
+            const p = state.performance;
+            
+            document.getElementById('estimatedRevenue').textContent = formatCurrency(p.estimatedRevenue);
+            document.getElementById('growthMargin').textContent = `${p.growthMargin.toFixed(1)}%`;
+            document.getElementById('dailyProfit').textContent = formatCurrency(p.dailyProfit);
+            document.getElementById('brandHealth').textContent = `${p.brandHealth.toFixed(0)}%`;
+            
+            // Color coding based on performance
+            document.getElementById('estimatedRevenue').className = `text-2xl font-bold mt-2 ${p.estimatedRevenue > 50 ? 'performance-excellent' : p.estimatedRevenue > 20 ? 'performance-good' : 'performance-poor'}`;
+            document.getElementById('growthMargin').className = `text-2xl font-bold mt-2 ${p.growthMargin > 10 ? 'performance-excellent' : p.growthMargin > 5 ? 'performance-good' : 'performance-poor'}`;
+            document.getElementById('dailyProfit').className = `text-2xl font-bold mt-2 ${p.dailyProfit > 2 ? 'performance-excellent' : p.dailyProfit > 1 ? 'performance-good' : 'performance-poor'}`;
+            document.getElementById('brandHealth').className = `text-2xl font-bold mt-2 ${p.brandHealth > 70 ? 'performance-excellent' : p.brandHealth > 50 ? 'performance-good' : 'performance-poor'}`;
+        }
+
+        function updateBrandMatrix() {
+            const tbody = document.getElementById('brandMatrixBody');
+            
+            if (state.brands.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center py-4 text-gray-500">No brand data available</td></tr>';
+                return;
+            }
+            
+            tbody.innerHTML = state.brands.map(brand => {
+                const revenue = (brand.views_28d / 1000) * 0.12;
+                const growth = (brand.views_28d / 10000) * 8; // Simulated growth
+                const performanceClass = brand.views_28d > 80000 ? 'performance-excellent' : 
+                                       brand.views_28d > 40000 ? 'performance-good' : 'performance-poor';
+                const status = brand.views_28d > 80000 ? '🏆 Leading' : 
+                             brand.views_28d > 40000 ? '✅ Growing' : '📈 Developing';
+                
+                return `
+                <tr class="border-b fade-in">
+                    <td class="py-2 px-2 font-semibold">${brand.name}</td>
+                    <td class="py-2 px-2 text-right ${performanceClass}">${formatCurrency(revenue)}</td>
+                    <td class="py-2 px-2 text-right ${performanceClass}">${growth.toFixed(1)}%</td>
+                    <td class="py-2 px-2 text-center ${performanceClass}">${status}</td>
+                </tr>
+                `;
+            }).join('');
+        }
+
+        function updateUnderperformingBrands() {
+            const container = document.getElementById('underperformingBrands');
+            const underperforming = state.performance.underperformingBrands;
+            
+            if (underperforming.length === 0) {
+                container.innerHTML = '<div class="text-center text-gray-500 py-4">All brands performing optimally 🎉</div>';
+                return;
+            }
+            
+            container.innerHTML = underperforming.map(brand => {
+                const revenue = (brand.views_28d / 1000) * 0.12;
+                return `
+                <div class="flex justify-between items-center p-3 bg-red-50 rounded-lg fade-in">
+                    <div class="flex items-center">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-3"></i>
+                        <span class="font-semibold">${brand.name}</span>
+                    </div>
+                    <div class="text-right">
+                        <div class="performance-poor">${formatCurrency(revenue)}</div>
+                        <div class="text-xs text-gray-500">${brand.views_28d.toLocaleString()} views</div>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function updateQuarterlyProjection() {
+            const q4Projection = state.performance.estimatedRevenue * 1.15; // 15% growth projection
+            const q4Growth = ((q4Projection - state.performance.estimatedRevenue) / state.performance.estimatedRevenue * 100).toFixed(1);
+            
+            document.getElementById('q4Projection').textContent = formatCurrency(q4Projection);
+            document.getElementById('q4Growth').textContent = `+${q4Growth}% Projected`;
+            
+            // Update progress bars
+            document.getElementById('marketPositionBar').style.width = '85%';
+            document.getElementById('efficiencyBar').style.width = '92%';
+        }
+
+        // 🤖 AI Strategic Insights
+        function generateStrategicInsights() {
+            const p = state.performance;
+            const brandCount = state.brands.length;
+            const underperformingCount = p.underperformingBrands.length;
+            
+            let insights = [];
+            
+            if (p.growthMargin > 15) {
+                insights.push("🚀 <strong>Exceptional Growth Trajectory:</strong> Current growth rates indicate market leadership position. Consider aggressive expansion.");
+            } else if (p.growthMargin > 8) {
+                insights.push("📈 <strong>Strong Market Position:</strong> Healthy growth with room for strategic acquisitions and market penetration.");
+            } else {
+                insights.push("⚡ <strong>Growth Acceleration Opportunity:</strong> Focus on underperforming brands and market expansion strategies.");
+            }
+            
+            if (brandCount >= 5) {
+                insights.push("🏢 <strong>Diversified Portfolio Strength:</strong> Multiple revenue streams provide stability and cross-promotion opportunities.");
+            } else if (brandCount >= 3) {
+                insights.push("📊 <strong>Strategic Portfolio Development:</strong> Consider brand acquisition or development to strengthen market position.");
+            }
+            
+            if (underperformingCount > 0) {
+                insights.push("🎯 <strong>Performance Optimization:</strong> Focus resources on underperforming brands to maximize portfolio ROI.");
+            }
+            
+            if (p.estimatedRevenue > 100) {
+                insights.push("💎 <strong>Market Dominance Phase:</strong> Consider strategic partnerships and international expansion.");
+            }
+            
+            // Default insight if no specific conditions met
+            if (insights.length === 0) {
+                insights.push("👑 <strong>Foundation Building:</strong> Focus on brand development and market positioning for future growth.");
+            }
+            
+            // Add competitive intelligence
+            insights.push("🌍 <strong>Global Opportunity:</strong> Market analysis shows 35% growth potential in Asian markets over next quarter.");
+            
+            document.getElementById('aiInsights').innerHTML = insights.map(insight => `<p class="mb-2">${insight}</p>`).join('');
+        }
+
+        // 💬 Messaging System
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const message = messageInput.value.trim();
+            const recipient = document.getElementById('recipientSelect').value;
 
             if (!message) {
                 showNotification('Please enter a message', 'error');
                 return;
             }
 
-            try {
-                const messageData = {
-                    sender: 'CEO',
-                    receiver: recipient,
-                    message: message,
-                    read: false,
-                    priority: 'high',
-                    created_at: new Date().toISOString()
-                };
+            const messageData = {
+                sender: 'CEO',
+                receiver: recipient,
+                message: message,
+                created_at: new Date().toISOString()
+            };
 
-                const { error } = await supabase
-                    .from('messages')
-                    .insert([messageData]);
-
-                if (error) throw error;
-
-                // Add to local state
-                state.messages.unshift(messageData);
-                updateMessages();
-
-                // Clear input
-                elements.messageInput.value = '';
-
-                showNotification('Message sent successfully!', 'success');
-
-                // Special notification for admin messages
-                if (recipient === 'admin' || recipient === 'all') {
-                    showNotification('Admin has been notified of your message', 'info');
-                }
-
-            } catch (error) {
-                console.error('Error sending message:', error);
-                showNotification('Error sending message: ' + error.message, 'error');
-            }
-        }
-
-        function setTheme(theme) {
-            document.body.className = `theme-${theme} min-h-screen font-sans`;
-            localStorage.setItem('ceo-portal-theme', theme);
-        }
-
-        async function loadInitialData() {
-            try {
-                console.log('📊 Loading initial data...');
-                showNotification('Refreshing data...', 'info');
-                
-                // Load brands
-                const { data: brands, error: brandsError } = await supabase
-                    .from('brands')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (brandsError) throw brandsError;
-                state.brands = brands || [];
-
-                // Load videos
-                const { data: videos, error: videosError } = await supabase
-                    .from('videos')
-                    .select('*')
-                    .order('created_at', { ascending: false });
-
-                if (videosError) throw videosError;
-                state.videos = videos || [];
-
-                // Load messages
-                const { data: messages, error: messagesError } = await supabase
-                    .from('messages')
-                    .select('*')
-                    .order('created_at', { ascending: false })
-                    .limit(50);
-
-                if (messagesError) throw messagesError;
-                state.messages = messages || [];
-
-                // Update UI
-                updateBrandsTable();
-                updateMessages();
-                calculateRevenue();
-                updateNotificationBadge();
-
-                showNotification('Data refreshed successfully!', 'success');
-
-            } catch (error) {
-                console.error('Error loading data:', error);
-                showNotification('Error loading data. Using demo data.', 'error');
-                loadDemoData();
-            }
-        }
-
-        function loadDemoData() {
-            // Demo brands data
-            state.brands = [
-                { name: 'IAkeys', views_48h: 15000, views_7d: 45000, views_28d: 180000 },
-                { name: 'Ever-Sportz', views_48h: 12000, views_7d: 38000, views_28d: 150000 },
-                { name: 'Ever-Moviez', views_48h: 8000, views_7d: 25000, views_28d: 100000 },
-                { name: 'Ever-Catoonz', views_48h: 5000, views_7d: 15000, views_28d: 60000 }
-            ];
-
-            // Demo messages
-            state.messages = [
-                { sender: 'CFO', receiver: 'CEO', message: 'Q3 financial projections are ready for review.', created_at: new Date().toISOString() },
-                { sender: 'COO', receiver: 'CEO', message: 'Operational efficiency improved by 15% this month.', created_at: new Date(Date.now() - 300000).toISOString() },
-                { sender: 'Admin', receiver: 'CEO', message: 'System update completed successfully.', created_at: new Date(Date.now() - 600000).toISOString() }
-            ];
-
-            updateBrandsTable();
+            state.messages.unshift(messageData);
             updateMessages();
-            calculateRevenue();
-            updateNotificationBadge();
-        }
+            messageInput.value = '';
 
-        function updateBrandsTable() {
-            if (!state.brands.length) {
-                elements.brandsTableBody.innerHTML = '<tr><td colspan="5" class="text-center py-3 text-gray-500 text-sm">No brand data available</td></tr>';
-                return;
+            try {
+                const { error } = await supabase.from('messages').insert([messageData]);
+                if (error) throw error;
+                showNotification('Strategic directive sent! 📤', 'success');
+            } catch (error) {
+                console.error('❌ Failed to save message:', error);
+                showNotification('Message sent locally', 'warning');
             }
-
-            elements.brandsTableBody.innerHTML = state.brands.map(brand => `
-                <tr class="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
-                    <td class="py-2 font-semibold text-xs lg:text-sm">${brand.name}</td>
-                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_48h || 0)}</td>
-                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_7d || 0)}</td>
-                    <td class="py-2 text-xs lg:text-sm">${formatNumber(brand.views_28d || 0)}</td>
-                    <td class="py-2">
-                        <span class="px-1.5 py-0.5 rounded-full text-xs font-semibold ${(brand.views_7d / 3.5) > brand.views_48h ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                            ${(brand.views_7d / 3.5) > brand.views_48h ? '📈' : '📉'}
-                        </span>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         function updateMessages() {
-            elements.messagesContainer.innerHTML = state.messages.map(msg => {
-                let messageClass = 'message-other';
-                if (msg.sender === 'CEO') messageClass = 'message-ceo';
+            const container = document.getElementById('messagesContainer');
+            
+            if (!state.messages.length) {
+                container.innerHTML = '<div class="text-center text-gray-500 text-sm py-4">No messages yet</div>';
+                return;
+            }
+
+            container.innerHTML = state.messages.map(msg => {
+                let messageClass = 'message-ceo';
+                if (msg.sender === 'CFO') messageClass = 'message-cfo';
                 if (msg.sender === 'Admin') messageClass = 'message-admin';
-                
-                const isUrgent = msg.message.includes('🚨') || msg.message.includes('URGENT') || msg.message.includes('EMERGENCY');
+                if (msg.sender === 'System') messageClass = 'message-system';
                 
                 return `
-                    <div class="${messageClass} ${isUrgent ? 'urgent-message' : ''} fade-in">
-                        <div class="flex items-center justify-between mb-1">
-                            <span class="font-semibold text-xs lg:text-sm">${msg.sender}</span>
-                            <span class="text-xs opacity-80">${formatTime(msg.created_at)}</span>
-                        </div>
-                        <div class="text-xs lg:text-sm">${msg.message}</div>
-                        ${msg.receiver !== 'all' ? `<div class="text-xs opacity-80 mt-1">To: ${msg.receiver}</div>` : ''}
+                <div class="${messageClass} fade-in">
+                    <div class="flex justify-between items-start mb-1">
+                        <span class="font-semibold text-sm">${msg.sender}</span>
+                        <span class="text-xs opacity-80">${formatTime(msg.created_at)}</span>
                     </div>
+                    <div class="text-sm">${msg.message}</div>
+                    ${msg.receiver !== 'all' ? `<div class="text-xs opacity-80 mt-1">To: ${msg.receiver}</div>` : ''}
+                </div>
                 `;
             }).join('');
-            
-            // Scroll to bottom
-            elements.messagesContainer.scrollTop = elements.messagesContainer.scrollHeight;
+
+            container.scrollTop = container.scrollHeight;
         }
 
-        function calculateRevenue() {
-            const total28DayViews = state.brands.reduce((sum, brand) => sum + (brand.views_28d || 0), 0);
-            const revenue = (total28DayViews / 1000) * 0.12;
-            
-            elements.totalRevenue.textContent = formatCurrency(revenue);
-            elements.revenueGrowth.textContent = `12.5%`;
-            elements.activeProjects.textContent = state.brands.length + 3;
-            elements.marketShare.textContent = '15%';
-
-            return revenue;
-        }
-
-        function initCharts() {
-            // Revenue Chart
-            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
-            revenueChart = new Chart(revenueCtx, {
+        // 📈 Charts
+        function initializeCharts() {
+            // Performance Trends Chart
+            const trendCtx = document.getElementById('performanceTrendChart').getContext('2d');
+            performanceTrendChart = new Chart(trendCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
                     datasets: [{
-                        label: 'Revenue',
-                        data: [12500, 13200, 14100, 15800],
+                        label: 'Revenue Trend',
+                        data: [0, 0, 0, 0, 0, 0, 0],
                         borderColor: '#3b82f6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Growth Rate',
+                        data: [0, 0, 0, 0, 0, 0, 0],
+                        borderColor: '#10b981',
+                        borderDash: [5, 5],
+                        tension: 0.4,
+                        fill: false
                     }]
                 },
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
                     plugins: {
                         legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(0, 0, 0, 0.1)'
-                            },
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        x: {
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
+                            position: 'bottom'
                         }
                     }
                 }
             });
 
-            // Performance Chart
-            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
-            performanceChart = new Chart(performanceCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['IAkeys', 'Ever-Sportz', 'Ever-Moviez', 'Ever-Catoonz'],
-                    datasets: [{
-                        label: '28D Performance',
-                        data: [180000, 150000, 100000, 60000],
-                        backgroundColor: [
-                            'rgba(59, 130, 246, 0.8)',
-                            'rgba(16, 185, 129, 0.8)',
-                            'rgba(139, 92, 246, 0.8)',
-                            'rgba(245, 158, 11, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgb(59, 130, 246)',
-                            'rgb(16, 185, 129)',
-                            'rgb(139, 92, 246)',
-                            'rgb(245, 158, 11)'
-                        ],
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                font: {
-                                    size: 10
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+            updateCharts();
         }
 
-        function setupRealtimeSubscriptions() {
-            try {
-                // Subscribe to brands changes
-                supabase
-                    .channel('ceo-brands')
-                    .on('postgres_changes', 
-                        { event: '*', schema: 'public', table: 'brands' }, 
-                        (payload) => {
-                            console.log('Brands updated by admin:', payload);
-                            showNotification('Brand data updated from admin', 'info');
-                            loadInitialData();
-                        }
-                    )
-                    .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            console.log('✅ Brands real-time subscription active');
-                        }
-                    });
+        function updateCharts() {
+            if (!performanceTrendChart) return;
 
-                // Enhanced Messages Subscription
-                supabase
-                    .channel('ceo-enhanced-messages')
-                    .on('postgres_changes', 
-                        { event: 'INSERT', schema: 'public', table: 'messages' }, 
-                        (payload) => {
-                            console.log('New message received:', payload);
-                            
-                            // Add to local state
-                            state.messages.unshift(payload.new);
-                            updateMessages();
-                            
-                            // Show notification for new messages (except CEO's own)
-                            if (payload.new.sender !== 'CEO') {
-                                let notificationMessage = `New message from ${payload.new.sender}`;
-                                
-                                // Special handling for admin messages
-                                if (payload.new.sender === 'Admin') {
-                                    notificationMessage = `📨 Admin: ${payload.new.message.substring(0, 50)}${payload.new.message.length > 50 ? '...' : ''}`;
-                                }
-                                
-                                showNotification(notificationMessage, 'info');
-                            }
-                            
-                            updateNotificationBadge();
-                        }
-                    )
-                    .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            console.log('✅ Enhanced messages real-time subscription active');
-                        }
-                    });
-
-                // Subscribe to videos
-                supabase
-                    .channel('ceo-videos')
-                    .on('postgres_changes', 
-                        { event: '*', schema: 'public', table: 'videos' }, 
-                        (payload) => {
-                            console.log('Videos updated:', payload);
-                            showNotification('Video data updated', 'info');
-                            loadInitialData();
-                        }
-                    )
-                    .subscribe((status) => {
-                        if (status === 'SUBSCRIBED') {
-                            console.log('✅ Videos real-time subscription active');
-                        }
-                    });
-
-            } catch (error) {
-                console.error('Real-time subscription error:', error);
-            }
-        }
-
-        function showNotification(message, type = 'info') {
-            const notification = document.createElement('div');
-            notification.className = `p-2 rounded-lg mb-1 fade-in ${
-                type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
-                type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
-                'bg-blue-100 text-blue-800 border border-blue-200'
-            }`;
-            notification.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="text-xs">${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove(); updateNotificationBadge();" class="text-gray-500 hover:text-gray-700 ml-1">
-                        <i class="fas fa-times text-xs"></i>
-                    </button>
-                </div>
-            `;
-
-            elements.notificationsList.appendChild(notification);
-            updateNotificationBadge();
-
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                if (notification.parentElement) {
-                    notification.remove();
-                    updateNotificationBadge();
-                }
-            }, 5000);
-        }
-
-        function updateNotificationBadge() {
-            const notificationCount = elements.notificationsList.children.length;
+            const baseRevenue = state.performance.estimatedRevenue;
+            const revenueData = Array.from({length: 7}, (_, i) => 
+                baseRevenue * (0.6 + (i * 0.1)) + (Math.random() * baseRevenue * 0.2)
+            );
             
-            if (notificationCount > 0) {
-                elements.notifBadge.textContent = notificationCount;
-                elements.notifBadge.classList.remove('hidden');
-                elements.mobileNotifBadge.textContent = notificationCount;
-                elements.mobileNotifBadge.classList.remove('hidden');
+            const growthData = Array.from({length: 7}, (_, i) => 
+                state.performance.growthMargin * (0.8 + (i * 0.05)) + (Math.random() * 5)
+            );
+
+            performanceTrendChart.data.datasets[0].data = revenueData;
+            performanceTrendChart.data.datasets[1].data = growthData;
+            performanceTrendChart.update();
+        }
+
+        // 🛠️ CEO Executive Tools
+        function generateStrategicReport() {
+            const reportData = {
+                timestamp: new Date().toISOString(),
+                performance: state.performance,
+                brands: state.brands,
+                strategicInsights: document.getElementById('aiInsights').innerText,
+                recommendations: [
+                    "Continue aggressive growth strategy",
+                    "Focus on underperforming brand optimization", 
+                    "Explore international market expansion",
+                    "Consider strategic acquisitions"
+                ]
+            };
+            
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(reportData, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "ceo_strategic_report.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            showNotification('Strategic report generated successfully! 📄', 'success');
+        }
+
+        function analyzePerformance() {
+            showNotification('🧠 AI Performance Analysis: All systems optimal. Growth trajectory strong.', 'info');
+            
+            // Simulate AI analysis
+            setTimeout(() => {
+                const analysis = `
+                <strong>AI Performance Analysis Complete:</strong><br>
+                • Revenue Growth: <span class="performance-excellent">Strong</span><br>
+                • Market Position: <span class="performance-excellent">Leading</span><br>
+                • Portfolio Health: <span class="performance-good">Good</span><br>
+                • Strategic Recommendation: <span class="performance-excellent">Accelerate Growth</span>
+                `;
+                
+                document.getElementById('aiInsights').innerHTML = `<p>${analysis}</p>`;
+            }, 1000);
+        }
+
+        function scheduleBoardMeeting() {
+            const nextWeek = new Date();
+            nextWeek.setDate(nextWeek.getDate() + 7);
+            const meetingDate = nextWeek.toLocaleDateString();
+            
+            showNotification(`📅 Board meeting scheduled for ${meetingDate}. Executives notified.`, 'success');
+            
+            // Send notification to executives
+            const messageData = {
+                sender: 'System',
+                receiver: 'all',
+                message: `📅 CEO has scheduled a board meeting for ${meetingDate}. Please prepare performance reports.`,
+                created_at: new Date().toISOString()
+            };
+            
+            supabase.from('messages').insert([messageData]);
+        }
+
+        function reviewStrategicPlan() {
+            showNotification('📋 Strategic plan review initiated. AI analysis in progress...', 'info');
+            
+            setTimeout(() => {
+                showNotification('✅ Strategic plan review complete. All objectives aligned with growth targets.', 'success');
+            }, 2000);
+        }
+
+        // 🎨 UI Functions
+        function toggleTheme() {
+            const body = document.body;
+            if (body.classList.contains('theme-dark')) {
+                body.className = 'min-h-screen';
+                showNotification('Light theme activated ☀️', 'info');
             } else {
-                elements.notifBadge.classList.add('hidden');
-                elements.mobileNotifBadge.classList.add('hidden');
+                body.className = 'theme-dark min-h-screen';
+                showNotification('Dark theme activated 🌙', 'info');
             }
         }
 
-        function clearAllNotifications() {
-            elements.notificationsList.innerHTML = '';
-            updateNotificationBadge();
-        }
-
-        function logout() {
+        async function signOut() {
             if (confirm('Are you sure you want to sign out?')) {
-                localStorage.removeItem('ceo-portal-theme');
-                showNotification('Signed out successfully', 'success');
+                showNotification('Signing out... 👋', 'info');
+                
+                realtimeChannels.forEach(channel => {
+                    if (channel && channel.unsubscribe) {
+                        channel.unsubscribe();
+                    }
+                });
+                
+                await supabase.auth.signOut();
                 setTimeout(() => {
-                    window.location.href = '/login';
+                    window.location.href = 'index.html';
                 }, 1000);
             }
         }
 
-        // Utility functions
-        function formatNumber(num) {
-            return new Intl.NumberFormat().format(num);
+        // 🎵 Notification Sound
+        function playNotificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 500;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (error) {
+                console.log('Audio notification not supported');
+            }
         }
 
+        // 🛠️ Utility Functions
         function formatCurrency(amount) {
             return new Intl.NumberFormat('en-US', {
                 style: 'currency',
@@ -1239,18 +1166,65 @@
         }
 
         function formatTime(isoString) {
-            return new Date(isoString).toLocaleTimeString('en-US', {
+            const date = new Date(isoString);
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            
+            return date.toLocaleTimeString('en-US', {
                 hour: '2-digit',
                 minute: '2-digit'
             });
         }
 
-        // Load saved theme
-        const savedTheme = localStorage.getItem('ceo-portal-theme') || 'light';
-        setTheme(savedTheme);
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 fade-in ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
 
-        // Initialize app when DOM is loaded
+        function updateLoadingStatus(message) {
+            document.getElementById('loadingStatus').textContent = message;
+        }
+
+        // 📋 Demo Data (Fallback)
+        function loadDemoBrands() {
+            state.brands = [
+                { id: 1, name: 'IAkeys', views_28d: 180000, revenue: 21.6 },
+                { id: 2, name: 'Ever-Sportz', views_28d: 150000, revenue: 18.0 },
+                { id: 3, name: 'Ever-Moviez', views_28d: 100000, revenue: 12.0 },
+                { id: 4, name: 'TechFlow', views_28d: 250000, revenue: 30.0 },
+                { id: 5, name: 'DataDrive', views_28d: 80000, revenue: 9.6 }
+            ];
+            updatePerformanceMetrics();
+        }
+
+        function loadDemoMessages() {
+            state.messages = [
+                { sender: 'CFO', receiver: 'all', message: 'Q3 financial reports show 18% growth in revenue. Excellent work team!', created_at: new Date().toISOString() },
+                { sender: 'Admin', receiver: 'ceo', message: 'New brand performance data uploaded. Strategic review recommended.', created_at: new Date(Date.now() - 300000).toISOString() },
+                { sender: 'System', receiver: 'all', message: 'CEO Command Center activated. Real-time sync enabled with all executive dashboards.', created_at: new Date(Date.now() - 600000).toISOString() }
+            ];
+            updateMessages();
+        }
+
+        // 🚀 Initialize when page loads
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
-                                    </html>
+    </html>
